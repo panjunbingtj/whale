@@ -61,6 +61,7 @@ public class ExecutorTransfer implements EventHandler, Callable {
         batchTransferQueue.publish(val);
     }
 
+
     @VisibleForTesting
     public DisruptorQueue getBatchTransferQueue() {
         return this.batchTransferQueue;
