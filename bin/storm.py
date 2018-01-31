@@ -765,6 +765,7 @@ def ui():
         "-DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector",
         "-Dlog4j.configurationFile=" + os.path.join(get_log4j2_conf_dir(), "cluster.xml")
     ]
+    print(jvmopts)
     exec_storm_class(
         "org.apache.storm.ui.core",
         jvmtype="-server",

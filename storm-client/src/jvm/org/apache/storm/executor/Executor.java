@@ -225,6 +225,8 @@ public abstract class Executor implements Callable, EventHandler<Object> {
         LOG.info("Loading executor tasks " + componentId + ":" + executorId);
 
         registerBackpressure();
+        //5.在Executor线程 执行execute()方法后，不断的Loop调用executorTransfer的Callable接口。一旦sendQueue buffer达到一定的阈值后。
+        // 调用ExecutorTransfer的Call方法
         Utils.SmartThread systemThreads =
                 Utils.asyncLoop(executorTransfer, executorTransfer.getName(), reportErrorDie);
 
@@ -239,6 +241,7 @@ public abstract class Executor implements Callable, EventHandler<Object> {
 
     public abstract void tupleActionFn(int taskId, TupleImpl tuple) throws Exception;
 
+    //15.Executor调用OnEvent()方法接收从Worker SendQueue发送过来的AddressTuple.然后调用tupleActionFn发送到相应的BoltExecutor或者SpoutExecutor
     @SuppressWarnings("unchecked")
     @Override
     public void onEvent(Object event, long seq, boolean endOfBatch) throws Exception {

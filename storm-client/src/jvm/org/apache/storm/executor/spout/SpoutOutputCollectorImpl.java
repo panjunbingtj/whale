@@ -84,6 +84,14 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
         executor.getReportError().report(error);
     }
 
+    /**
+     * 1.首先 Spout调用sendSpoutMsg() 发送一个tuple到下游bolt
+     * @param stream
+     * @param values
+     * @param messageId
+     * @param outTaskId
+     * @return
+     */
     private List<Integer> sendSpoutMsg(String stream, List<Object> values, Object messageId, Integer outTaskId) {
         emittedCount.increment();
 

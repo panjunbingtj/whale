@@ -25,6 +25,8 @@ import org.apache.storm.task.GeneralTopologyContext;
 import org.apache.storm.tuple.AddressedTuple;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.utils.ObjectReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,6 +40,9 @@ import java.util.concurrent.atomic.AtomicLong;
  * A class that is called when a TaskMessage arrives.
  */
 public class DeserializingConnectionCallback implements IConnectionCallback, IMetric {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DeserializingConnectionCallback.class);
+
     private final WorkerState.ILocalTransferCallback cb;
     private final Map conf;
     private final GeneralTopologyContext context;
@@ -63,16 +68,20 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
 
     }
 
+    //13.当有消息发送到Worker中时。Worker接收线程从接收队列中读取TaskMessage序列化后的数据，然后将其进行反序列化操作。最终得到带有消息头的AddressTuple。
+    //然后调用回调函数的transfer方法。
     @Override
     public void recv(List<TaskMessage> batch) {
         KryoTupleDeserializer des = _des.get();
         ArrayList<AddressedTuple> ret = new ArrayList<>(batch.size());
+        LOG.info("the time of start deserializing : {}", System.currentTimeMillis());
         for (TaskMessage message: batch) {
             Tuple tuple = des.deserialize(message.message());
             AddressedTuple addrTuple = new AddressedTuple(message.task(), tuple);
             updateMetrics(tuple.getSourceTask(), message);
             ret.add(addrTuple);
         }
+        LOG.info("the time of start deserializing : {}", System.currentTimeMillis());
         cb.transfer(ret);
     }
 

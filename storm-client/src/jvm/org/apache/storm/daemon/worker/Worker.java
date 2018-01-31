@@ -18,31 +18,12 @@
 
 package org.apache.storm.daemon.worker;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import javax.security.auth.Subject;
-
+import com.google.common.base.Preconditions;
+import com.lmax.disruptor.EventHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.storm.Config;
-import org.apache.storm.cluster.ClusterStateContext;
-import org.apache.storm.cluster.ClusterUtils;
-import org.apache.storm.cluster.DaemonType;
-import org.apache.storm.cluster.IStateStorage;
-import org.apache.storm.cluster.IStormClusterState;
+import org.apache.storm.cluster.*;
 import org.apache.storm.daemon.DaemonCommon;
 import org.apache.storm.daemon.Shutdownable;
 import org.apache.storm.daemon.StormCommon;
@@ -50,33 +31,30 @@ import org.apache.storm.executor.Executor;
 import org.apache.storm.executor.ExecutorShutdown;
 import org.apache.storm.executor.IRunningExecutor;
 import org.apache.storm.executor.LocalExecutor;
-import org.apache.storm.generated.Credentials;
-import org.apache.storm.generated.ExecutorInfo;
-import org.apache.storm.generated.ExecutorStats;
-import org.apache.storm.generated.LSWorkerHeartbeat;
-import org.apache.storm.generated.LogConfig;
+import org.apache.storm.generated.*;
 import org.apache.storm.messaging.IConnection;
 import org.apache.storm.messaging.IContext;
 import org.apache.storm.messaging.TaskMessage;
 import org.apache.storm.security.auth.AuthUtils;
 import org.apache.storm.security.auth.IAutoCredentials;
 import org.apache.storm.stats.StatsUtil;
-import org.apache.storm.utils.ConfigUtils;
-import org.apache.storm.utils.Utils;
-import org.apache.storm.utils.DisruptorBackpressureCallback;
-import org.apache.storm.utils.LocalState;
-import org.apache.storm.utils.ObjectReader;
-import org.apache.storm.utils.Time;
-import org.apache.storm.utils.WorkerBackpressureCallback;
-import org.apache.storm.utils.WorkerBackpressureThread;
+import org.apache.storm.utils.*;
 import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Preconditions;
-import com.lmax.disruptor.EventHandler;
-
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J;
+
+import javax.security.auth.Subject;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.security.PrivilegedExceptionAction;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Worker implements Shutdownable, DaemonCommon {
 
@@ -183,6 +161,7 @@ public class Worker implements Shutdownable, DaemonCommon {
                     .scheduleRecurring(0, (Integer) conf.get(Config.WORKER_HEARTBEAT_FREQUENCY_SECS),
                         Worker.this::doExecutorHeartbeats);
 
+                //11.worker注册相应的回调函数用来接受远程worker发送来的消息。
                 workerState.registerCallbacks();
 
                 workerState.refreshConnections(null);
@@ -207,6 +186,7 @@ public class Worker implements Shutdownable, DaemonCommon {
                 }
                 executorsAtom.set(newExecutors);
 
+                //10.Worker的传输线程不断的异步从Worker的传输队列中循环调用，不断的批量消费传输队列中的消息。发送到相应的远程Worker中
                 EventHandler<Object> tupleHandler = (packets, seqId, batchEnd) -> workerState
                     .sendTuplesToRemoteWorker((HashMap<Integer, ArrayList<TaskMessage>>) packets, seqId, batchEnd);
 

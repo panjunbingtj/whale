@@ -25,7 +25,10 @@ import org.apache.storm.topology.IRichBolt;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.Values;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -78,7 +81,7 @@ public class WordCountTopology extends ConfigurableTopology {
 
     TopologyBuilder builder = new TopologyBuilder();
 
-    builder.setSpout("spout", new RandomSentenceSpout(), 1);
+    builder.setSpout("spout", new RandomSentenceSpout(), 5);
 
 //    builder.setBolt("split", new SplitSentence(), 3).allGrouping("spout");
     builder.setBolt("split", new SplitSentenceForCountBolt(), 3).allGrouping("spout");
