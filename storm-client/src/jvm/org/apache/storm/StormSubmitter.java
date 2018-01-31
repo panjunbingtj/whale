@@ -311,7 +311,7 @@ public class StormSubmitter {
                                                        String serConf, NimbusClient client) throws TException {
         try {
             String jar = submitJarAs(conf, System.getProperty("storm.jar"), progressListener, client);
-            //String jar = submitJarAs(conf, "/home/tjmaster/ProgramProjects/IDEAProjects/storm/examples/storm-starter/target/storm-starter-2.0.0-SNAPSHOT.jar", progressListener, client);
+
             LOG.info("Submitting topology {} in distributed mode with conf {}", name, serConf);
             Utils.addVersions(topology);
             if (opts != null) {

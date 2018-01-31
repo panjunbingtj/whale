@@ -225,8 +225,11 @@ public abstract class Executor implements Callable, EventHandler<Object> {
         LOG.info("Loading executor tasks " + componentId + ":" + executorId);
 
         registerBackpressure();
-        //5.在Executor线程 执行execute()方法后，不断的Loop调用executorTransfer的Callable接口。一旦sendQueue buffer达到一定的阈值后。
-        // 调用ExecutorTransfer的Call方法
+
+        /**
+         * 5.在Executor线程 执行execute()方法后，不断的Loop调用executorTransfer的Callable接口。一旦sendQueue buffer达到一定的阈值后。
+         * 调用ExecutorTransfer的Call方法
+         */
         Utils.SmartThread systemThreads =
                 Utils.asyncLoop(executorTransfer, executorTransfer.getName(), reportErrorDie);
 
