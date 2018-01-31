@@ -58,6 +58,7 @@ public class ExecutorTransfer implements EventHandler, Callable {
         if (isDebug) {
             LOG.info("TRANSFERRING tuple {}", val);
         }
+        LOG.info("the time of transferring tuple : {}", System.currentTimeMillis());
         batchTransferQueue.publish(val);
     }
 

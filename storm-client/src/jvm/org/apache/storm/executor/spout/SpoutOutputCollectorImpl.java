@@ -25,9 +25,11 @@ import org.apache.storm.spout.ISpoutOutputCollector;
 import org.apache.storm.tuple.MessageId;
 import org.apache.storm.tuple.TupleImpl;
 import org.apache.storm.tuple.Values;
-import org.apache.storm.utils.Utils;
 import org.apache.storm.utils.MutableLong;
 import org.apache.storm.utils.RotatingMap;
+import org.apache.storm.utils.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +46,7 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
     private final Boolean isEventLoggers;
     private final Boolean isDebug;
     private final RotatingMap<Long, TupleInfo> pending;
+    public static final Logger LOG = LoggerFactory.getLogger(SpoutOutputCollectorImpl.class);
 
     @SuppressWarnings("unused")
     public SpoutOutputCollectorImpl(ISpout spout, SpoutExecutor executor, Task taskData, int taskId,
@@ -95,6 +98,7 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
         boolean needAck = (messageId != null) && hasAckers;
 
         long rootId = MessageId.generateId(random);
+        LOG.info("the time of start copying : {}", System.currentTimeMillis());
         for (Integer t : outTasks) {
             MessageId msgId;
             if (needAck) {
@@ -108,6 +112,8 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
             TupleImpl tuple = new TupleImpl(executor.getWorkerTopologyContext(), values, this.taskId, stream, msgId);
             executor.getExecutorTransfer().transfer(t, tuple);
         }
+        LOG.info("the time of end copying : {}", System.currentTimeMillis());
+
         if (isEventLoggers) {
             executor.sendToEventLogger(executor, taskData, values, executor.getComponentId(), messageId, random);
         }

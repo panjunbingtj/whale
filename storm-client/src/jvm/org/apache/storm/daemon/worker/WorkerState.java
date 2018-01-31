@@ -29,34 +29,16 @@ import org.apache.storm.cluster.VersionedData;
 import org.apache.storm.daemon.StormCommon;
 import org.apache.storm.daemon.supervisor.AdvancedFSOps;
 import org.apache.storm.executor.IRunningExecutor;
-import org.apache.storm.generated.Assignment;
-import org.apache.storm.generated.DebugOptions;
-import org.apache.storm.generated.Grouping;
-import org.apache.storm.generated.InvalidTopologyException;
-import org.apache.storm.generated.NodeInfo;
-import org.apache.storm.generated.StormBase;
-import org.apache.storm.generated.StormTopology;
-import org.apache.storm.generated.StreamInfo;
-import org.apache.storm.generated.TopologyStatus;
+import org.apache.storm.generated.*;
 import org.apache.storm.grouping.Load;
 import org.apache.storm.grouping.LoadMapping;
 import org.apache.storm.hooks.BaseWorkerHook;
-import org.apache.storm.messaging.ConnectionWithStatus;
-import org.apache.storm.messaging.DeserializingConnectionCallback;
-import org.apache.storm.messaging.IConnection;
-import org.apache.storm.messaging.IContext;
-import org.apache.storm.messaging.TaskMessage;
-import org.apache.storm.messaging.TransportFactory;
+import org.apache.storm.messaging.*;
 import org.apache.storm.serialization.KryoTupleSerializer;
 import org.apache.storm.task.WorkerTopologyContext;
 import org.apache.storm.tuple.AddressedTuple;
 import org.apache.storm.tuple.Fields;
-import org.apache.storm.utils.ConfigUtils;
-import org.apache.storm.utils.Utils;
-import org.apache.storm.utils.DisruptorQueue;
-import org.apache.storm.utils.ObjectReader;
-import org.apache.storm.utils.ThriftTopologyUtils;
-import org.apache.storm.utils.TransferDrainer;
+import org.apache.storm.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,8 +53,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class WorkerState {
 
@@ -533,6 +513,7 @@ public class WorkerState {
         }
         List<AddressedTuple> local = new ArrayList<>();
         Map<Integer, List<TaskMessage>> remoteMap = new HashMap<>();
+        LOG.info("the time of start serializing : {}", System.currentTimeMillis());
         for (AddressedTuple addressedTuple : tupleBatch) {
             int destTask = addressedTuple.getDest();
             if (taskIds.contains(destTask)) {
@@ -546,6 +527,7 @@ public class WorkerState {
                 remoteMap.get(destTask).add(new TaskMessage(destTask, serializer.serialize(addressedTuple.getTuple())));
             }
         }
+        LOG.info("the time of end serializing : {}", System.currentTimeMillis());
 
         if (!local.isEmpty()) {
             transferLocal(local);
@@ -658,12 +640,12 @@ public class WorkerState {
         }
         return receiveQueueMap;
     }
-    
+
     private Map<String, Object> makeDefaultResources() {
         int threadPoolSize = ObjectReader.getInt(conf.get(Config.TOPOLOGY_WORKER_SHARED_THREAD_POOL_SIZE));
         return ImmutableMap.of(WorkerTopologyContext.SHARED_EXECUTOR, Executors.newFixedThreadPool(threadPoolSize));
     }
-    
+
     private Map<String, Object> makeUserResources() {
         /* TODO: need to invoke a hook provided by the topology, giving it a chance to create user resources.
         * this would be part of the initialization hook
