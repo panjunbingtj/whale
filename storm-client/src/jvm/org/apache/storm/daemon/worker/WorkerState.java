@@ -474,6 +474,7 @@ public class WorkerState {
         });
     }
 
+    //12.注册回调函数，WorkerState中的registerCallbacks()方法中注册反序列化连接回调函数。
     public void registerCallbacks() {
         LOG.info("Registering IConnectionCallbacks for {}:{}", assignmentId, port);
         receiver.registerRecv(new DeserializingConnectionCallback(topologyConf,
@@ -481,6 +482,7 @@ public class WorkerState {
             this::transferLocal));
     }
 
+    //14.调用用第一个步骤声明的transferLocal()方法 在Worker内部本地发送到相应的线程
     public void transferLocal(List<AddressedTuple> tupleBatch) {
         Map<Integer, List<AddressedTuple>> grouped = new HashMap<>();
         for (AddressedTuple tuple : tupleBatch) {
@@ -507,6 +509,9 @@ public class WorkerState {
         }
     }
 
+    //9.不断的对AddressedTuple进行序列化操作，并将要发送到相同的task的AddressedTuple进行打包批量的发送消息。
+    // 如果需要发送到本地worker的taskid，我们调用WorkerState的transferLocal方法发送到本地。本地发送不需要序列化
+    // 需要发送到远程Worker的消息，序列化后进行打包成Map<Integer, List<TaskMessage>>对象发送到Worker的传输队列中去
     public void transfer(KryoTupleSerializer serializer, List<AddressedTuple> tupleBatch) {
         if (trySerializeLocal) {
             assertCanSerialize(serializer, tupleBatch);

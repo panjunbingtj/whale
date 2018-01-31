@@ -53,6 +53,8 @@ public class ExecutorTransfer implements EventHandler, Callable {
         this.isDebug = ObjectReader.getBoolean(topoConf.get(Config.TOPOLOGY_DEBUG), false);
     }
 
+    //4.ExecutorTransfer将tuple添加目标task信息，将tuple封装成AddressedTuple。并将封装后的结果AddressedTuple publish到batchTransferQueue队列中。
+    // batchTransferQueue也就是Executor的发送队列。
     public void transfer(int task, Tuple tuple) {
         AddressedTuple val = new AddressedTuple(task, tuple);
         if (isDebug) {
@@ -68,6 +70,7 @@ public class ExecutorTransfer implements EventHandler, Callable {
         return this.batchTransferQueue;
     }
 
+    //6.ExecutorTransfer的Call方法被调用。batchTransferQueue批量的消费消息
     @Override
     public Object call() throws Exception {
         batchTransferQueue.consumeBatchWhenAvailable(this);
@@ -78,11 +81,13 @@ public class ExecutorTransfer implements EventHandler, Callable {
         return batchTransferQueue.getName();
     }
 
+    //7.相应事件，不断的批量消费batchTransferQueue中的AddressedTuple对象
     @Override
     public void onEvent(Object event, long sequence, boolean endOfBatch) throws Exception {
         ArrayList cachedEvents = (ArrayList) cachedEmit.getObject();
         cachedEvents.add(event);
         if (endOfBatch) {
+            //8.调用WorkerState的transfer方法。对AddressedTuple进行序列化操作
             workerData.transfer(serializer, cachedEvents);
             cachedEmit.setObject(new ArrayList<>());
         }

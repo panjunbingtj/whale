@@ -84,6 +84,14 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
         executor.getReportError().report(error);
     }
 
+    /**
+     * 1.首先 Spout调用sendSpoutMsg() 发送一个tuple到下游bolt
+     * @param stream
+     * @param values
+     * @param messageId
+     * @param outTaskId
+     * @return
+     */
     private List<Integer> sendSpoutMsg(String stream, List<Object> values, Object messageId, Integer outTaskId) {
         emittedCount.increment();
 
@@ -98,6 +106,8 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
         boolean needAck = (messageId != null) && hasAckers;
 
         long rootId = MessageId.generateId(random);
+
+        //2.根据上游spout和下游bolt之间的分组信息，将tuple发送到下游相应的task中，并且封装成TupleImpl类
         LOG.info("the time of start copying : {}", System.currentTimeMillis());
         for (Integer t : outTasks) {
             MessageId msgId;
@@ -110,6 +120,7 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
             }
 
             TupleImpl tuple = new TupleImpl(executor.getWorkerTopologyContext(), values, this.taskId, stream, msgId);
+            //3.outputCollector调用executor的ExecutorTransfer类的transfer方法(）将tuple添加目标taskId信息，封装成AddressTuple
             executor.getExecutorTransfer().transfer(t, tuple);
         }
         LOG.info("the time of end copying : {}", System.currentTimeMillis());
