@@ -88,7 +88,7 @@ public class WordCountTopology extends ConfigurableTopology {
 
     String topologyName = "word-count";
 
-    conf.setNumWorkers(3);
+    conf.setNumWorkers(4);
 
     if (args != null && args.length > 0) {
       topologyName = args[0];

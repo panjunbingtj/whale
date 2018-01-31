@@ -55,8 +55,8 @@ public class RandomSentenceSpout extends BaseRichSpout {
 
       LOG.debug("Emitting tuple: {}", sentence);
 
-      _collector.emit(new Values(sentence));
       LOG.info("the time of emitting tuple : {}", System.currentTimeMillis());
+      _collector.emit(new Values(sentence));
       flag = false;
     }
   }
