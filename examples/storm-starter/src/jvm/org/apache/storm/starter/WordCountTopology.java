@@ -17,20 +17,16 @@
  */
 package org.apache.storm.starter;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.storm.starter.spout.RandomSentenceSpout;
 import org.apache.storm.task.ShellBolt;
-import org.apache.storm.topology.BasicOutputCollector;
-import org.apache.storm.topology.ConfigurableTopology;
-import org.apache.storm.topology.IRichBolt;
-import org.apache.storm.topology.OutputFieldsDeclarer;
-import org.apache.storm.topology.TopologyBuilder;
+import org.apache.storm.topology.*;
 import org.apache.storm.topology.base.BaseBasicBolt;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This topology demonstrates Storm's stream groupings and multilang
@@ -91,7 +87,7 @@ public class WordCountTopology extends ConfigurableTopology {
 
     String topologyName = "word-count";
 
-    conf.setNumWorkers(3);
+    conf.setNumWorkers(1);
 
     if (args != null && args.length > 0) {
       topologyName = args[0];

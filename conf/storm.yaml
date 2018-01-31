@@ -16,16 +16,14 @@
 
 ########## These MUST be filled in for a storm configuration
  storm.zookeeper.servers:
-     - "192.168.223.202"
-     - "192.168.223.204"
-     - "192.168.223.205"
+     - "localhost"
 
  nimbus.seeds: ["localhost"]
 
 
  ##### These may optionally be filled in:
 
- storm.local.dir: "D://ProgramProjects/IntelJIDEAProject/IntelliJIDEA15.0.2/BigDataProject/StormSource/storm"
+ storm.local.dir: "/home/tjmaster/ProgramProjects/IDEAProjects/storm"
 
  supervisor.slots.ports:
          - 6700

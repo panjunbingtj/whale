@@ -17,29 +17,10 @@
  */
 package org.apache.storm;
 
-import java.io.File;
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.commons.lang.StringUtils;
-import org.apache.storm.blobstore.NimbusBlobStore;
 import org.apache.storm.dependency.DependencyPropertiesParser;
 import org.apache.storm.dependency.DependencyUploader;
-import org.apache.storm.generated.AlreadyAliveException;
-import org.apache.storm.generated.AuthorizationException;
-import org.apache.storm.generated.Credentials;
-import org.apache.storm.generated.InvalidTopologyException;
-import org.apache.storm.generated.NotAliveException;
-import org.apache.storm.generated.StormTopology;
-import org.apache.storm.generated.SubmitOptions;
-import org.apache.storm.generated.TopologyInfo;
-import org.apache.storm.generated.TopologyInitialStatus;
+import org.apache.storm.generated.*;
 import org.apache.storm.hooks.SubmitterHookException;
 import org.apache.storm.security.auth.AuthUtils;
 import org.apache.storm.security.auth.IAutoCredentials;
@@ -52,7 +33,14 @@ import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Sets;
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Use this class to submit topologies to run on the Storm cluster. You should run your program
@@ -323,6 +311,7 @@ public class StormSubmitter {
                                                        String serConf, NimbusClient client) throws TException {
         try {
             String jar = submitJarAs(conf, System.getProperty("storm.jar"), progressListener, client);
+            //String jar = submitJarAs(conf, "/home/tjmaster/ProgramProjects/IDEAProjects/storm/examples/storm-starter/target/storm-starter-2.0.0-SNAPSHOT.jar", progressListener, client);
             LOG.info("Submitting topology {} in distributed mode with conf {}", name, serConf);
             Utils.addVersions(topology);
             if (opts != null) {
