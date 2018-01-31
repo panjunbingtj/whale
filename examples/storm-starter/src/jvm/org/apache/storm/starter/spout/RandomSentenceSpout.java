@@ -34,7 +34,7 @@ import java.util.Random;
 
 public class RandomSentenceSpout extends BaseRichSpout {
   private static final Logger LOG = LoggerFactory.getLogger(RandomSentenceSpout.class);
-
+  private static boolean flag = true;
   SpoutOutputCollector _collector;
   Random _rand;
 
@@ -47,14 +47,18 @@ public class RandomSentenceSpout extends BaseRichSpout {
 
   @Override
   public void nextTuple() {
-    Utils.sleep(100);
-    String[] sentences = new String[]{sentence("the cow jumped over the moon"), sentence("an apple a day keeps the doctor away"),
-            sentence("four score and seven years ago"), sentence("snow white and the seven dwarfs"), sentence("i am at two with nature")};
-    final String sentence = sentences[_rand.nextInt(sentences.length)];
+    if (flag){
+      Utils.sleep(100);
+      String[] sentences = new String[]{sentence("the cow jumped over the moon"), sentence("an apple a day keeps the doctor away"),
+              sentence("four score and seven years ago"), sentence("snow white and the seven dwarfs"), sentence("i am at two with nature")};
+      final String sentence = sentences[_rand.nextInt(sentences.length)];
 
-    LOG.debug("Emitting tuple: {}", sentence);
+      LOG.debug("Emitting tuple: {}", sentence);
 
-    _collector.emit(new Values(sentence));
+      _collector.emit(new Values(sentence));
+      LOG.info("the time of emitting tuple : {}", System.currentTimeMillis());
+      flag = false;
+    }
   }
 
   protected String sentence(String input) {

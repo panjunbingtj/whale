@@ -17,20 +17,16 @@
  */
 package org.apache.storm.starter;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import org.apache.storm.starter.bolt.SplitSentenceForCountBolt;
 import org.apache.storm.starter.spout.RandomSentenceSpout;
 import org.apache.storm.task.ShellBolt;
-import org.apache.storm.topology.BasicOutputCollector;
 import org.apache.storm.topology.ConfigurableTopology;
 import org.apache.storm.topology.IRichBolt;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.TopologyBuilder;
-import org.apache.storm.topology.base.BaseBasicBolt;
 import org.apache.storm.tuple.Fields;
-import org.apache.storm.tuple.Tuple;
-import org.apache.storm.tuple.Values;
+
+import java.util.Map;
 
 /**
  * This topology demonstrates Storm's stream groupings and multilang
@@ -54,25 +50,25 @@ public class WordCountTopology extends ConfigurableTopology {
     }
   }
 
-  public static class WordCount extends BaseBasicBolt {
-    Map<String, Integer> counts = new HashMap<String, Integer>();
-
-    @Override
-    public void execute(Tuple tuple, BasicOutputCollector collector) {
-      String word = tuple.getString(0);
-      Integer count = counts.get(word);
-      if (count == null)
-        count = 0;
-      count++;
-      counts.put(word, count);
-      collector.emit(new Values(word, count));
-    }
-
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer declarer) {
-      declarer.declare(new Fields("word", "count"));
-    }
-  }
+//  public static class WordCount extends BaseBasicBolt {
+//    Map<String, Integer> counts = new HashMap<String, Integer>();
+//
+//    @Override
+//    public void execute(Tuple tuple, BasicOutputCollector collector) {
+//      String word = tuple.getString(0);
+//      Integer count = counts.get(word);
+//      if (count == null)
+//        count = 0;
+//      count++;
+//      counts.put(word, count);
+//      collector.emit(new Values(word, count));
+//    }
+//
+//    @Override
+//    public void declareOutputFields(OutputFieldsDeclarer declarer) {
+//      declarer.declare(new Fields("word", "count"));
+//    }
+//  }
 
   public static void main(String[] args) throws Exception {
     ConfigurableTopology.start(new WordCountTopology(), args);
@@ -82,10 +78,11 @@ public class WordCountTopology extends ConfigurableTopology {
 
     TopologyBuilder builder = new TopologyBuilder();
 
-    builder.setSpout("spout", new RandomSentenceSpout(), 5);
+    builder.setSpout("spout", new RandomSentenceSpout(), 1);
 
-    builder.setBolt("split", new SplitSentence(), 8).shuffleGrouping("spout");
-    builder.setBolt("count", new WordCount(), 12).fieldsGrouping("split", new Fields("word"));
+//    builder.setBolt("split", new SplitSentence(), 3).allGrouping("spout");
+    builder.setBolt("split", new SplitSentenceForCountBolt(), 3).allGrouping("spout");
+//    builder.setBolt("count", new WordCount(), 12).fieldsGrouping("split", new Fields("word"));
 
     conf.setDebug(true);
 
