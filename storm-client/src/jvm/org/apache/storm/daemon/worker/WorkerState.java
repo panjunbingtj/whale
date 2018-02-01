@@ -513,12 +513,12 @@ public class WorkerState {
     // 如果需要发送到本地worker的taskid，我们调用WorkerState的transferLocal方法发送到本地。本地发送不需要序列化
     // 需要发送到远程Worker的消息，序列化后进行打包成Map<Integer, List<TaskMessage>>对象发送到Worker的传输队列中去
     public void transfer(KryoTupleSerializer serializer, List<AddressedTuple> tupleBatch) {
+        LOG.info("the time of start serializing : {}", System.currentTimeMillis());
         if (trySerializeLocal) {
             assertCanSerialize(serializer, tupleBatch);
         }
         List<AddressedTuple> local = new ArrayList<>();
         Map<Integer, List<TaskMessage>> remoteMap = new HashMap<>();
-        LOG.info("the time of start serializing : {}", System.currentTimeMillis());
         for (AddressedTuple addressedTuple : tupleBatch) {
             int destTask = addressedTuple.getDest();
             if (taskIds.contains(destTask)) {

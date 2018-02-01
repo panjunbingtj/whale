@@ -70,6 +70,9 @@ public class WordCountTopology extends ConfigurableTopology {
 //    }
 //  }
 
+  /*
+  * 提交命令： storm jar storm-starter-2.0.0-SNAPSHOT.jar org.apache.storm.starter.WordCountTopology wordcount007 3
+  * */
   public static void main(String[] args) throws Exception {
     ConfigurableTopology.start(new WordCountTopology(), args);
   }
@@ -81,7 +84,10 @@ public class WordCountTopology extends ConfigurableTopology {
     builder.setSpout("spout", new RandomSentenceSpout(), 1);
 
 //    builder.setBolt("split", new SplitSentence(), 3).allGrouping("spout");
-    builder.setBolt("split", new SplitSentenceForCountBolt(), 3).allGrouping("spout");
+    int boltNum = 3;
+    if(args != null && args.length > 1)
+      boltNum = Integer.getInteger(args[1]);
+      builder.setBolt("split", new SplitSentenceForCountBolt(), boltNum).allGrouping("spout");
 //    builder.setBolt("count", new WordCount(), 12).fieldsGrouping("split", new Fields("word"));
 
     conf.setDebug(true);
