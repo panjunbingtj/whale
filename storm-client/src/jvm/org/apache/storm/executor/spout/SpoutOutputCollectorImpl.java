@@ -107,19 +107,21 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
 
         long rootId = MessageId.generateId(random);
         LOG.info("the time of copying start: {}", System.currentTimeMillis());
-        for (Integer t : outTasks) {
-            MessageId msgId;
-            if (needAck) {
-                long as = MessageId.generateId(random);
-                msgId = MessageId.makeRootId(rootId, as);
-                ackSeq.add(as);
-            } else {
-                msgId = MessageId.makeUnanchored();
-            }
 
-            TupleImpl tuple = new TupleImpl(executor.getWorkerTopologyContext(), values, this.taskId, stream, msgId);
-            executor.getExecutorTransfer().transfer(t, tuple);
+        ////////////////////////////////////优化SpoutOutputCollector/////////////////////////
+        MessageId msgId;
+        if (needAck) {
+            long as = MessageId.generateId(random);
+            msgId = MessageId.makeRootId(rootId, as);
+            ackSeq.add(as);
+        } else {
+            msgId = MessageId.makeUnanchored();
         }
+
+        TupleImpl tuple = new TupleImpl(executor.getWorkerTopologyContext(), values, this.taskId, stream, msgId);
+        executor.getExecutorTransferAllGrouping().transferBatchTuple(outTasks,tuple);
+        ////////////////////////////////////优化SpoutOutputCollector/////////////////////////
+
         LOG.info("the time of copying end: {}", System.currentTimeMillis());
 
         if (isEventLoggers) {

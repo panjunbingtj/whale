@@ -17,12 +17,6 @@
  */
 package org.apache.storm.executor.bolt;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
 import org.apache.storm.daemon.Acker;
 import org.apache.storm.daemon.Task;
 import org.apache.storm.hooks.info.BoltAckInfo;
@@ -33,10 +27,12 @@ import org.apache.storm.tuple.MessageId;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.TupleImpl;
 import org.apache.storm.tuple.Values;
-import org.apache.storm.utils.Utils;
 import org.apache.storm.utils.Time;
+import org.apache.storm.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 public class BoltOutputCollectorImpl implements IOutputCollector {
 
@@ -76,24 +72,25 @@ public class BoltOutputCollectorImpl implements IOutputCollector {
             outTasks = taskData.getOutgoingTasks(streamId, values);
         }
 
-        for (Integer t : outTasks) {
-            Map<Long, Long> anchorsToIds = new HashMap<>();
-            if (anchors != null) {
-                for (Tuple a : anchors) {
-                    Set<Long> rootIds = a.getMessageId().getAnchorsToIds().keySet();
-                    if (rootIds.size() > 0) {
-                        long edgeId = MessageId.generateId(random);
-                        ((TupleImpl) a).updateAckVal(edgeId);
-                        for (Long root_id : rootIds) {
-                            putXor(anchorsToIds, root_id, edgeId);
-                        }
+        ////////////////////////////////////优化BoltOutputCollector/////////////////////////
+        Map<Long, Long> anchorsToIds = new HashMap<>();
+        if (anchors != null) {
+            for (Tuple a : anchors) {
+                Set<Long> rootIds = a.getMessageId().getAnchorsToIds().keySet();
+                if (rootIds.size() > 0) {
+                    long edgeId = MessageId.generateId(random);
+                    ((TupleImpl) a).updateAckVal(edgeId);
+                    for (Long root_id : rootIds) {
+                        putXor(anchorsToIds, root_id, edgeId);
                     }
                 }
             }
-            MessageId msgId = MessageId.makeId(anchorsToIds);
-            TupleImpl tupleExt = new TupleImpl(executor.getWorkerTopologyContext(), values, taskId, streamId, msgId);
-            executor.getExecutorTransfer().transfer(t, tupleExt);
         }
+        MessageId msgId = MessageId.makeId(anchorsToIds);
+        TupleImpl tupleExt = new TupleImpl(executor.getWorkerTopologyContext(), values, taskId, streamId, msgId);
+        executor.getExecutorTransferAllGrouping().transferBatchTuple(outTasks,tupleExt);
+        ////////////////////////////////////优化BoltOutputCollector/////////////////////////
+
         if (isEventLoggers) {
             executor.sendToEventLogger(executor, taskData, values, executor.getComponentId(), null, random);
         }

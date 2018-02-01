@@ -71,7 +71,7 @@ public class WordCountTopology extends ConfigurableTopology {
 //  }
 
   public static void main(String[] args) throws Exception {
-    ConfigurableTopology.start(new WordCountTopology(), args);
+      ConfigurableTopology.start(new WordCountTopology(), args);
   }
 
   protected int run(String[] args) throws Exception {

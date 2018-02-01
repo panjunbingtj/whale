@@ -81,7 +81,7 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
             updateMetrics(tuple.getSourceTask(), message);
             ret.add(addrTuple);
         }
-        LOG.info("the time of start deserializing : {}", System.currentTimeMillis());
+        LOG.info("the time of end deserializing : {}", System.currentTimeMillis());
         cb.transfer(ret);
     }
 

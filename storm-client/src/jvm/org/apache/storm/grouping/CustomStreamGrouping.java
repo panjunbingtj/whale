@@ -23,7 +23,6 @@ import java.io.Serializable;
 import java.util.List;
 
 public interface CustomStreamGrouping extends Serializable {
-    
    /**
      * Tells the stream grouping at runtime the tasks in the target bolt.
      * This information should be used in chooseTasks to determine the target tasks.

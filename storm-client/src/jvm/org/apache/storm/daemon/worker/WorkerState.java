@@ -28,6 +28,7 @@ import org.apache.storm.cluster.IStormClusterState;
 import org.apache.storm.cluster.VersionedData;
 import org.apache.storm.daemon.StormCommon;
 import org.apache.storm.daemon.supervisor.AdvancedFSOps;
+import org.apache.storm.executor.BatchTuple;
 import org.apache.storm.executor.IRunningExecutor;
 import org.apache.storm.generated.*;
 import org.apache.storm.grouping.Load;
@@ -38,6 +39,7 @@ import org.apache.storm.serialization.KryoTupleSerializer;
 import org.apache.storm.task.WorkerTopologyContext;
 import org.apache.storm.tuple.AddressedTuple;
 import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Tuple;
 import org.apache.storm.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -513,12 +515,13 @@ public class WorkerState {
     // 如果需要发送到本地worker的taskid，我们调用WorkerState的transferLocal方法发送到本地。本地发送不需要序列化
     // 需要发送到远程Worker的消息，序列化后进行打包成Map<Integer, List<TaskMessage>>对象发送到Worker的传输队列中去
     public void transfer(KryoTupleSerializer serializer, List<AddressedTuple> tupleBatch) {
+        LOG.info("the time of start serializing : {}", System.currentTimeMillis());
         if (trySerializeLocal) {
             assertCanSerialize(serializer, tupleBatch);
         }
         List<AddressedTuple> local = new ArrayList<>();
         Map<Integer, List<TaskMessage>> remoteMap = new HashMap<>();
-        LOG.info("the time of start serializing : {}", System.currentTimeMillis());
+
         for (AddressedTuple addressedTuple : tupleBatch) {
             int destTask = addressedTuple.getDest();
             if (taskIds.contains(destTask)) {
@@ -539,6 +542,43 @@ public class WorkerState {
         }
         if (!remoteMap.isEmpty()) {
             transferQueue.publish(remoteMap);
+        }
+    }
+
+    public void transferAllGrouping(KryoTupleSerializer serializer, List<BatchTuple> batchTuples) {
+        for(BatchTuple batchTuple:batchTuples){
+            LOG.info("the time of start serializing : {}", System.currentTimeMillis());
+            Tuple tuple = batchTuple.getTuple();
+            List<Integer> outTasks = batchTuple.getOutTasks();
+            if (trySerializeLocal) {
+                assertCanSerializeAllGrouping(serializer, tuple);
+            }
+
+            List<AddressedTuple> local = new ArrayList<>();
+            Map<Integer, List<TaskMessage>> remoteMap = new HashMap<>();
+            byte[] serializeByte = serializer.serialize(tuple);
+
+            for(Integer destTask:outTasks){
+                if(taskIds.contains(destTask)){
+                    // Local task
+                    local.add(new AddressedTuple(destTask,tuple));
+                }else {
+                    // Using java objects directly to avoid performance issues in java code
+                    if (! remoteMap.containsKey(destTask)) {
+                        remoteMap.put(destTask, new ArrayList<>());
+                    }
+                    remoteMap.get(destTask).add(new TaskMessage(destTask,serializeByte));
+                }
+            }
+
+            LOG.info("the time of end serializing : {}", System.currentTimeMillis());
+
+            if (!local.isEmpty()) {
+                transferLocal(local);
+            }
+            if (!remoteMap.isEmpty()) {
+                transferQueue.publish(remoteMap);
+            }
         }
     }
 
@@ -563,6 +603,11 @@ public class WorkerState {
         for (AddressedTuple addressedTuple : tuples) {
             serializer.serialize(addressedTuple.getTuple());
         }
+    }
+
+    private void assertCanSerializeAllGrouping(KryoTupleSerializer serializer, Tuple tuple) {
+        // Check that all of the tuples can be serialized by serializing them
+        serializer.serialize(tuple);
     }
 
     public WorkerTopologyContext getWorkerTopologyContext() {
@@ -689,6 +734,8 @@ public class WorkerState {
         }
         return outboundTasks;
     }
+
+
 
     public interface ILocalTransferCallback {
         void transfer(List<AddressedTuple> tupleBatch);

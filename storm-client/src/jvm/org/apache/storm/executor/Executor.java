@@ -90,14 +90,24 @@ public abstract class Executor implements Callable, EventHandler<Object> {
     protected final List<LoadAwareCustomStreamGrouping> groupers;
     protected final ReportErrorAndDie reportErrorDie;
     protected final Callable<Boolean> sampler;
+
+    ///////////////////优化///////////////////
     protected ExecutorTransfer executorTransfer;
+    protected ExecutorTransferAllGrouping executorTransferAllGrouping;
+    ///////////////////优化///////////////////
+
     protected final String type;
     protected final AtomicBoolean throttleOn;
 
     protected final IReportError reportError;
     protected final Random rand;
+
+    ///////////////////优化///////////////////
     protected final DisruptorQueue sendQueue;
+    protected final DisruptorQueue sendQueueAllGrouping;
     protected final DisruptorQueue receiveQueue;
+    //////////////////优化///////////////////
+
     protected Map<Integer, Task> idToTask;
     protected final Map<String, String> credentials;
     protected final Boolean isDebug;
@@ -123,6 +133,8 @@ public abstract class Executor implements Callable, EventHandler<Object> {
 
         this.sendQueue = mkExecutorBatchQueue(topoConf, executorId);
         this.executorTransfer = new ExecutorTransfer(workerData, sendQueue, topoConf);
+        this.sendQueueAllGrouping=mkExecutorAllGroupingBatchQueue(topoConf,executorId);
+        this.executorTransferAllGrouping=new ExecutorTransferAllGrouping(workerData, sendQueueAllGrouping, topoConf);
 
         this.suicideFn = workerData.getSuicideCallback();
         try {
@@ -233,13 +245,16 @@ public abstract class Executor implements Callable, EventHandler<Object> {
         Utils.SmartThread systemThreads =
                 Utils.asyncLoop(executorTransfer, executorTransfer.getName(), reportErrorDie);
 
+        Utils.SmartThread systemAllGroupingThreads =
+                Utils.asyncLoop(executorTransferAllGrouping, executorTransferAllGrouping.getName(), reportErrorDie);
+
         String handlerName = componentId + "-executor" + executorId;
         Utils.SmartThread handlers =
                 Utils.asyncLoop(this, false, reportErrorDie, Thread.NORM_PRIORITY, true, true, handlerName);
         setupTicks(StatsUtil.SPOUT.equals(type));
 
         LOG.info("Finished loading executor " + componentId + ":" + executorId);
-        return new ExecutorShutdown(this, Lists.newArrayList(systemThreads, handlers), idToTask, receiveQueue, sendQueue);
+        return new ExecutorShutdown(this, Lists.newArrayList(systemThreads,systemAllGroupingThreads, handlers), idToTask, receiveQueue, sendQueue);
     }
 
     public abstract void tupleActionFn(int taskId, TupleImpl tuple) throws Exception;
@@ -390,6 +405,15 @@ public abstract class Executor implements Callable, EventHandler<Object> {
         int batchSize = ObjectReader.getInt(topoConf.get(Config.TOPOLOGY_DISRUPTOR_BATCH_SIZE));
         int batchTimeOutMs = ObjectReader.getInt(topoConf.get(Config.TOPOLOGY_DISRUPTOR_BATCH_TIMEOUT_MILLIS));
         return new DisruptorQueue("executor" + executorId + "-send-queue", ProducerType.MULTI,
+                sendSize, waitTimeOutMs, batchSize, batchTimeOutMs);
+    }
+
+    private DisruptorQueue mkExecutorAllGroupingBatchQueue(Map<String, Object> topoConf, List<Long> executorId) {
+        int sendSize = ObjectReader.getInt(topoConf.get(Config.TOPOLOGY_EXECUTOR_SEND_BUFFER_SIZE));
+        int waitTimeOutMs = ObjectReader.getInt(topoConf.get(Config.TOPOLOGY_DISRUPTOR_WAIT_TIMEOUT_MILLIS));
+        int batchSize = ObjectReader.getInt(topoConf.get(Config.TOPOLOGY_DISRUPTOR_BATCH_SIZE));
+        int batchTimeOutMs = ObjectReader.getInt(topoConf.get(Config.TOPOLOGY_DISRUPTOR_BATCH_TIMEOUT_MILLIS));
+        return new DisruptorQueue("executor" + executorId + "-allgrouping-send-queue", ProducerType.MULTI,
                 sendSize, waitTimeOutMs, batchSize, batchTimeOutMs);
     }
 
@@ -555,6 +579,10 @@ public abstract class Executor implements Callable, EventHandler<Object> {
 
     public WorkerState getWorkerData() {
         return workerData;
+    }
+
+    public ExecutorTransferAllGrouping getExecutorTransferAllGrouping() {
+        return executorTransferAllGrouping;
     }
 
     public Map<String, Map<String, LoadAwareCustomStreamGrouping>> getStreamToComponentToGrouper() {

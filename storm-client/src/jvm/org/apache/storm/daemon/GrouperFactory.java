@@ -193,6 +193,7 @@ public class GrouperFactory {
             random = new Random();
         }
 
+
         @Override
         public void prepare(WorkerTopologyContext context, GlobalStreamId stream, List<Integer> targetTasks) {
             this.targetTasks = targetTasks;
