@@ -41,7 +41,7 @@ public class SplitSentenceForCountBolt extends BaseBasicBolt {
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
-        LOG.info("the time of splitting tuple : {}", System.currentTimeMillis());
+        LOG.info("the time of receiving tuple in bolt: {}", System.currentTimeMillis());
 
         for (String word : splitSentence(input.getString(0))) {
             collector.emit(new Values(word));

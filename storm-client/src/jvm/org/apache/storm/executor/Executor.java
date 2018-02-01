@@ -255,7 +255,7 @@ public abstract class Executor implements Callable, EventHandler<Object> {
             if (isDebug) {
                 LOG.info("Processing received message FOR {} TUPLE: {}", taskId, tuple);
             }
-            LOG.info("the time of receiving message: {}", System.currentTimeMillis());
+            LOG.info("the time of receiving message in executor: {}", System.currentTimeMillis());
             if (taskId != AddressedTuple.BROADCAST_DEST) {
                 tupleActionFn(taskId, tuple);
             } else {
