@@ -545,6 +545,7 @@ public class WorkerState {
         }
     }
 
+    ////////////////////////////////////优化transferAllGrouping/////////////////////////
     public void transferAllGrouping(KryoTupleSerializer serializer, List<BatchTuple> batchTuples) {
         for(BatchTuple batchTuple:batchTuples){
             LOG.info("the time of start serializing : {}", System.currentTimeMillis());
@@ -581,6 +582,7 @@ public class WorkerState {
             }
         }
     }
+    ////////////////////////////////////优化transferAllGrouping/////////////////////////
 
     // TODO: consider having a max batch size besides what disruptor does automagically to prevent latency issues
     public void sendTuplesToRemoteWorker(HashMap<Integer, ArrayList<TaskMessage>> packets, long seqId, boolean batchEnd) {
