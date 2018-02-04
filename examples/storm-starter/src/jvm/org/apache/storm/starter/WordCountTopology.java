@@ -85,7 +85,7 @@ public class WordCountTopology extends ConfigurableTopology {
 //    if(args != null && args.length > 1)
 //      boltNum = Integer.getInteger(args[1]);
 
-    builder.setBolt("split", new SplitSentenceForCountBolt(), 2).allGrouping("spout");
+    builder.setBolt("split", new SplitSentenceForCountBolt(), 140).allGrouping("spout");
 //    builder.setBolt("count", new WordCount(), 12).fieldsGrouping("split", new Fields("word"));
 
     conf.setDebug(true);
