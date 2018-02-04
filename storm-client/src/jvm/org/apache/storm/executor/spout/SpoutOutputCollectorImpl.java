@@ -106,7 +106,7 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
         boolean needAck = (messageId != null) && hasAckers;
 
         long rootId = MessageId.generateId(random);
-        LOG.info("the time of copying start: {}", System.currentTimeMillis());
+//        LOG.info("the time of copying start: {}", System.currentTimeMillis());
         for (Integer t : outTasks) {
             MessageId msgId;
             if (needAck) {
@@ -120,7 +120,7 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
             TupleImpl tuple = new TupleImpl(executor.getWorkerTopologyContext(), values, this.taskId, stream, msgId);
             executor.getExecutorTransfer().transfer(t, tuple);
         }
-        LOG.info("the time of copying end: {}", System.currentTimeMillis());
+//        LOG.info("the time of copying end: {}", System.currentTimeMillis());
 
         if (isEventLoggers) {
             executor.sendToEventLogger(executor, taskData, values, executor.getComponentId(), messageId, random);

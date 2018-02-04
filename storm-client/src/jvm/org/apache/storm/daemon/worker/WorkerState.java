@@ -484,6 +484,7 @@ public class WorkerState {
 
     //14.调用用第一个步骤声明的transferLocal()方法 在Worker内部本地发送到相应的线程
     public void transferLocal(List<AddressedTuple> tupleBatch) {
+        LOG.info("the time of transferring end : {}", System.currentTimeMillis());
         Map<Integer, List<AddressedTuple>> grouped = new HashMap<>();
         for (AddressedTuple tuple : tupleBatch) {
             Integer executor = taskToShortExecutor.get(tuple.dest);

@@ -47,18 +47,18 @@ public class RandomSentenceSpout extends BaseRichSpout {
 
   @Override
   public void nextTuple() {
-    if (flag){
-      Utils.sleep(100);
+//    if (flag){
+      Utils.sleep(5);
       String[] sentences = new String[]{sentence("the cow jumped over the moon"), sentence("an apple a day keeps the doctor away"),
               sentence("four score and seven years ago"), sentence("snow white and the seven dwarfs"), sentence("i am at two with nature")};
       final String sentence = sentences[_rand.nextInt(sentences.length)];
 
       LOG.debug("Emitting tuple: {}", sentence);
 
-      LOG.info("the time of emitting tuple : {}", System.currentTimeMillis());
+//      LOG.info("the time of emitting tuple : {}", System.currentTimeMillis());
       _collector.emit(new Values(sentence));
-      flag = false;
-    }
+//      flag = false;
+//    }
   }
 
   protected String sentence(String input) {

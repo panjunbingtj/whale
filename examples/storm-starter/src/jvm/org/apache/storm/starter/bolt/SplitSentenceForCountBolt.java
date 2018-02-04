@@ -34,14 +34,26 @@ import java.util.Map;
 public class SplitSentenceForCountBolt extends BaseBasicBolt {
     public static final String FIELDS = "word";
     private static final Logger LOG = LoggerFactory.getLogger(SplitSentenceForCountBolt.class);
+    private Long tuples;
+    private Long millionTuple;
 
     @Override
     public void prepare(Map<String, Object> topoConf, TopologyContext context) {
+        tuples = 0L;
+        millionTuple = 0L;
     }
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
-        LOG.info("the time of receiving tuple in bolt: {}", System.currentTimeMillis());
+//        LOG.info("the time of receiving tuple in bolt: {}", System.currentTimeMillis());
+        if (tuples < 1000000){
+            tuples++;
+        }
+        else {
+            millionTuple++;
+            tuples = 0L;
+        }
+        LOG.info("the time of receiving {} million and {} tuple at {}", millionTuple, tuples, System.currentTimeMillis());
 
         for (String word : splitSentence(input.getString(0))) {
             collector.emit(new Values(word));

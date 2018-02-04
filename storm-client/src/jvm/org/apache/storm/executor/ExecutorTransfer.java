@@ -60,7 +60,7 @@ public class ExecutorTransfer implements EventHandler, Callable {
         if (isDebug) {
             LOG.info("TRANSFERRING tuple {}", val);
         }
-        LOG.info("the time of transferring tuple : {}", System.currentTimeMillis());
+//        LOG.info("the time of transferring tuple : {}", System.currentTimeMillis());
         batchTransferQueue.publish(val);
     }
 
@@ -88,6 +88,7 @@ public class ExecutorTransfer implements EventHandler, Callable {
         cachedEvents.add(event);
         if (endOfBatch) {
             //8.调用WorkerState的transfer方法。对AddressedTuple进行序列化操作
+            LOG.info("the time of transferring start : {}, tuple : {}", System.currentTimeMillis(), cachedEvents.get(0));
             workerData.transfer(serializer, cachedEvents);
             cachedEmit.setObject(new ArrayList<>());
         }

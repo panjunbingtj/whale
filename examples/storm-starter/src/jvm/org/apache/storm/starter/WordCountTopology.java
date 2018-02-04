@@ -19,14 +19,8 @@ package org.apache.storm.starter;
 
 import org.apache.storm.starter.bolt.SplitSentenceForCountBolt;
 import org.apache.storm.starter.spout.RandomSentenceSpout;
-import org.apache.storm.task.ShellBolt;
 import org.apache.storm.topology.ConfigurableTopology;
-import org.apache.storm.topology.IRichBolt;
-import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.TopologyBuilder;
-import org.apache.storm.tuple.Fields;
-
-import java.util.Map;
 
 /**
  * This topology demonstrates Storm's stream groupings and multilang
@@ -35,22 +29,22 @@ import java.util.Map;
  * storm jar storm-starter-2.0.0-SNAPSHOT.jar org.apache.storm.starter.WordCountTopology wrodcount1
  */
 public class WordCountTopology extends ConfigurableTopology {
-  public static class SplitSentence extends ShellBolt implements IRichBolt {
-
-    public SplitSentence() {
-      super("python", "splitsentence.py");
-    }
-
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer declarer) {
-      declarer.declare(new Fields("word"));
-    }
-
-    @Override
-    public Map<String, Object> getComponentConfiguration() {
-      return null;
-    }
-  }
+//  public static class SplitSentence extends ShellBolt implements IRichBolt {
+//
+//    public SplitSentence() {
+//      super("python", "splitsentence.py");
+//    }
+//
+//    @Override
+//    public void declareOutputFields(OutputFieldsDeclarer declarer) {
+//      declarer.declare(new Fields("word"));
+//    }
+//
+//    @Override
+//    public Map<String, Object> getComponentConfiguration() {
+//      return null;
+//    }
+//  }
 
 //  public static class WordCount extends BaseBasicBolt {
 //    Map<String, Integer> counts = new HashMap<String, Integer>();
@@ -72,8 +66,12 @@ public class WordCountTopology extends ConfigurableTopology {
 //    }
 //  }
 
+  /*
+  * 提交命令：
+  * storm jar storm-starter-2.0.0-SNAPSHOT.jar org.apache.storm.starter.WordCountTopology wordcount001 140
+  * */
   public static void main(String[] args) throws Exception {
-      ConfigurableTopology.start(new WordCountTopology(), args);
+    ConfigurableTopology.start(new WordCountTopology(), args);
   }
 
   protected int run(String[] args) throws Exception {
@@ -83,7 +81,11 @@ public class WordCountTopology extends ConfigurableTopology {
     builder.setSpout("spout", new RandomSentenceSpout(), 1);
 
 //    builder.setBolt("split", new SplitSentence(), 3).allGrouping("spout");
-    builder.setBolt("split", new SplitSentenceForCountBolt(), 7).allGrouping("spout");
+//    int boltNum = 3;
+//    if(args != null && args.length > 1)
+//      boltNum = Integer.getInteger(args[1]);
+
+    builder.setBolt("split", new SplitSentenceForCountBolt(), 2).allGrouping("spout");
 //    builder.setBolt("count", new WordCount(), 12).fieldsGrouping("split", new Fields("word"));
 
     conf.setDebug(true);

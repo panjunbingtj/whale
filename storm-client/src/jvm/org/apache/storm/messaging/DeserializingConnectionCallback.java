@@ -74,14 +74,14 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
     public void recv(List<TaskMessage> batch) {
         KryoTupleDeserializer des = _des.get();
         ArrayList<AddressedTuple> ret = new ArrayList<>(batch.size());
-        LOG.info("the time of start deserializing : {}", System.currentTimeMillis());
+        LOG.info("the time of deserializing start : {}", System.currentTimeMillis());
         for (TaskMessage message: batch) {
             Tuple tuple = des.deserialize(message.message());
             AddressedTuple addrTuple = new AddressedTuple(message.task(), tuple);
             updateMetrics(tuple.getSourceTask(), message);
             ret.add(addrTuple);
         }
-        LOG.info("the time of end deserializing : {}", System.currentTimeMillis());
+        LOG.info("the time of deserializing end : {}, tuple [{}]", System.currentTimeMillis(), ret.get(0).getTuple());
         cb.transfer(ret);
     }
 
