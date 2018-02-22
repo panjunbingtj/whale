@@ -17,18 +17,21 @@
  */
 package org.apache.storm.utils;
 
+import com.google.common.collect.Maps;
+import org.apache.storm.generated.NodeInfo;
+import org.apache.storm.messaging.IConnection;
+import org.apache.storm.messaging.TaskMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.storm.generated.NodeInfo;
-import org.apache.storm.messaging.IConnection;
-import org.apache.storm.messaging.TaskMessage;
-import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+/**
+ * 发送TaskMessages到远程RemoteWorker的工具类
+ */
 public class TransferDrainer {
 
   private Map<Integer, ArrayList<ArrayList<TaskMessage>>> bundles = new HashMap();

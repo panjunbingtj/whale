@@ -187,6 +187,7 @@ public class Worker implements Shutdownable, DaemonCommon {
                 executorsAtom.set(newExecutors);
 
                 //10.Worker的传输线程不断的异步从Worker的传输队列中循环调用，不断的批量消费传输队列中的消息。发送到相应的远程Worker中
+                //workerState内的transferQueue一旦有数据，则会调用自身的sendTuplesToRemoteWorker方法进行远程传输
                 EventHandler<Object> tupleHandler = (packets, seqId, batchEnd) -> workerState
                     .sendTuplesToRemoteWorker((HashMap<Integer, ArrayList<TaskMessage>>) packets, seqId, batchEnd);
 
