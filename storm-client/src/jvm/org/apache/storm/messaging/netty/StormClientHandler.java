@@ -17,24 +17,16 @@
  */
 package org.apache.storm.messaging.netty;
 
-import org.apache.storm.messaging.TaskMessage;
+import org.apache.storm.messaging.WorkerMessage;
 import org.apache.storm.serialization.KryoValuesDeserializer;
-
-import java.net.ConnectException;
-import java.util.Map;
-import java.util.List;
-import java.io.IOException;
-
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
-
 import org.jboss.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.ConnectException;
+import java.util.List;
+import java.util.Map;
 
 public class StormClientHandler extends SimpleChannelUpstreamHandler  {
     private static final Logger LOG = LoggerFactory.getLogger(StormClientHandler.class);
@@ -58,11 +50,11 @@ public class StormClientHandler extends SimpleChannelUpstreamHandler  {
         } else if (message instanceof List) {
             try {
                 //This should be the metrics, and there should only be one of them
-                List<TaskMessage> list = (List<TaskMessage>)message;
+                List<WorkerMessage> list = (List<WorkerMessage>)message;
                 if (list.size() < 1) throw new RuntimeException("Didn't see enough load metrics ("+client.getDstAddress()+") "+list);
-                TaskMessage tm = ((List<TaskMessage>)message).get(list.size() - 1);
-                if (tm.task() != -1) throw new RuntimeException("Metrics messages are sent to the system task ("+client.getDstAddress()+") "+tm);
-                List metrics = _des.deserialize(tm.message());
+                WorkerMessage workerMessage = ((List<WorkerMessage>)message).get(list.size() - 1);
+                if (workerMessage.tasks().get(0) != -1) throw new RuntimeException("Metrics messages are sent to the system task ("+client.getDstAddress()+") "+workerMessage);
+                List metrics = _des.deserialize(workerMessage.message());
                 if (metrics.size() < 1) throw new RuntimeException("No metrics data in the metrics message ("+client.getDstAddress()+") "+metrics);
                 if (!(metrics.get(0) instanceof Map)) throw new RuntimeException("The metrics did not have a map in the first slot ("+client.getDstAddress()+") "+metrics);
                 client.setLoadMetrics((Map<Integer, Double>)metrics.get(0));

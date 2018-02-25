@@ -17,23 +17,11 @@
  */
 package org.apache.storm.messaging.netty;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.Iterator;
-import java.util.Collection;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Timer;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.lang.InterruptedException;
-
 import org.apache.storm.Config;
 import org.apache.storm.grouping.Load;
 import org.apache.storm.messaging.ConnectionWithStatus;
-import org.apache.storm.messaging.TaskMessage;
 import org.apache.storm.messaging.IConnectionCallback;
+import org.apache.storm.messaging.WorkerMessage;
 import org.apache.storm.metric.api.IStatefulObject;
 import org.apache.storm.utils.ObjectReader;
 import org.apache.storm.utils.StormBoundedExponentialBackoffRetry;
@@ -48,11 +36,14 @@ import org.jboss.netty.util.TimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-import java.util.ArrayList;
-import java.util.List;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -268,19 +259,19 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
 
     @Override
     public void send(int taskId, byte[] payload) {
-        TaskMessage msg = new TaskMessage(taskId, payload);
-        List<TaskMessage> wrapper = new ArrayList<TaskMessage>(1);
-        wrapper.add(msg);
-        send(wrapper.iterator());
+        WorkerMessage workerMessage=new WorkerMessage(Arrays.asList(taskId),payload);
+        send(workerMessage);
     }
 
+    ////////////////////////////////////优化transferAllGrouping/////////////////////////
     /**
      * Enqueue task messages to be sent to the remote destination (cf. `host` and `port`).
      */
     @Override
-    public void send(Iterator<TaskMessage> msgs) {
+    public void send(WorkerMessage msgs) {
+        LOG.info("Client send msg : {}",msgs);
         if (closing) {
-            int numMessages = iteratorSize(msgs);
+            int numMessages = msgs.tasks().size();
             LOG.error("discarding {} messages because the Netty client to {} is being closed", numMessages,
                     dstAddressPrefixedName);
             return;
@@ -304,12 +295,9 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
         }
 
         synchronized (writeLock) {
-            while (msgs.hasNext()) {
-                TaskMessage message = msgs.next();
-                MessageBatch full = batcher.add(message);
-                if(full != null){
-                    flushMessages(channel, full);
-                }
+            MessageBatch full = batcher.add(msgs);
+            if(full != null){
+                flushMessages(channel, full);
             }
         }
 
@@ -329,6 +317,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
             // because we know `Channel.isWritable` was false after the messages were already in the buffer.
         }
     }
+    ////////////////////////////////////优化transferAllGrouping/////////////////////////
 
     private Channel getConnectedChannel() {
         Channel channel = channelRef.get();
@@ -349,25 +338,18 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
         return dstAddress;
     }
 
-    private boolean hasMessages(Iterator<TaskMessage> msgs) {
-        return msgs != null && msgs.hasNext();
+    private boolean hasMessages(WorkerMessage workerMessage) {
+        return workerMessage != null && workerMessage.tasks().size()!=0;
     }
 
-    private void dropMessages(Iterator<TaskMessage> msgs) {
+    private void dropMessages(WorkerMessage msgs) {
         // We consume the iterator by traversing and thus "emptying" it.
         int msgCount = iteratorSize(msgs);
         messagesLost.getAndAdd(msgCount);
     }
 
-    private int iteratorSize(Iterator<TaskMessage> msgs) {
-        int size = 0;
-        if (msgs != null) {
-            while (msgs.hasNext()) {
-                size++;
-                msgs.next();
-            }
-        }
-        return size;
+    private int iteratorSize(WorkerMessage msgs) {
+        return msgs.tasks().size();
     }
 
     /**
@@ -381,7 +363,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
         }
 
         final int numMessages = batch.size();
-        LOG.debug("writing {} messages to channel {}", batch.size(), channel.toString());
+        LOG.info("writing {} messages to channel {}", batch.size(), channel.toString());
         pendingMessages.addAndGet(numMessages);
 
         ChannelFuture future = channel.write(batch);
@@ -389,7 +371,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
             public void operationComplete(ChannelFuture future) throws Exception {
                 pendingMessages.addAndGet(0 - numMessages);
                 if (future.isSuccess()) {
-                    LOG.debug("sent {} messages to {}", numMessages, dstAddressPrefixedName);
+                    LOG.info("sent {} messages to {}", numMessages, dstAddressPrefixedName);
                     messagesSent.getAndAdd(batch.size());
                 } else {
                     LOG.error("failed to send {} messages to {}: {}", numMessages, dstAddressPrefixedName,

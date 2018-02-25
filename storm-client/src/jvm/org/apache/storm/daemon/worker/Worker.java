@@ -34,7 +34,7 @@ import org.apache.storm.executor.LocalExecutor;
 import org.apache.storm.generated.*;
 import org.apache.storm.messaging.IConnection;
 import org.apache.storm.messaging.IContext;
-import org.apache.storm.messaging.TaskMessage;
+import org.apache.storm.messaging.WorkerMessage;
 import org.apache.storm.security.auth.AuthUtils;
 import org.apache.storm.security.auth.IAutoCredentials;
 import org.apache.storm.stats.StatsUtil;
@@ -188,14 +188,19 @@ public class Worker implements Shutdownable, DaemonCommon {
 
                 //10.Worker的传输线程不断的异步从Worker的传输队列中循环调用，不断的批量消费传输队列中的消息。发送到相应的远程Worker中
                 //workerState内的transferQueue一旦有数据，则会调用自身的sendTuplesToRemoteWorker方法进行远程传输
+
+                ////////////////////////////////////优化transferAllGrouping/////////////////////////
+//                EventHandler<Object> tupleHandler = (packets, seqId, batchEnd) -> workerState
+//                    .sendTuplesToRemoteWorker((HashMap<Integer, ArrayList<TaskMessage>>) packets, seqId, batchEnd);
                 EventHandler<Object> tupleHandler = (packets, seqId, batchEnd) -> workerState
-                    .sendTuplesToRemoteWorker((HashMap<Integer, ArrayList<TaskMessage>>) packets, seqId, batchEnd);
+                        .sendTuplesToRemoteWorkerAllGrouping((HashMap<NodeInfo, WorkerMessage>) packets, seqId, batchEnd);
 
                 // This thread will publish the messages destined for remote tasks to remote connections
                 transferThread = Utils.asyncLoop(() -> {
                     workerState.transferQueue.consumeBatchWhenAvailable(tupleHandler);
                     return 0L;
                 });
+                ////////////////////////////////////优化transferAllGrouping/////////////////////////
 
                 DisruptorBackpressureCallback disruptorBackpressureHandler =
                     mkDisruptorBackpressureHandler(workerState);

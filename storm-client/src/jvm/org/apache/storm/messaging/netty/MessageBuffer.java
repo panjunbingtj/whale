@@ -17,7 +17,7 @@
  */
 package org.apache.storm.messaging.netty;
 
-import org.apache.storm.messaging.TaskMessage;
+import org.apache.storm.messaging.WorkerMessage;
 
 /**
  * Encapsulates the state used for batching up messages.
@@ -31,7 +31,7 @@ public class MessageBuffer {
         this.currentBatch = new MessageBatch(mesageBatchSize);
     }
 
-    public synchronized MessageBatch add(TaskMessage msg){
+    public synchronized MessageBatch add(WorkerMessage msg){
         currentBatch.add(msg);
         if(currentBatch.isFull()){
             MessageBatch ret = currentBatch;

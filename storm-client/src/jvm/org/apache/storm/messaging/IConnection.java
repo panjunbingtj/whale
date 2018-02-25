@@ -18,8 +18,8 @@
 package org.apache.storm.messaging;
 
 import org.apache.storm.grouping.Load;
+
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 
 public interface IConnection {
@@ -47,8 +47,11 @@ public interface IConnection {
      * @param msgs
      */
 
-    public void send(Iterator<TaskMessage> msgs);
-    
+    ////////////////////////////////////优化transferAllGrouping/////////////////////////
+    //public void send(Iterator<TaskMessage> msgs);
+    public void send(WorkerMessage msgs);
+    ////////////////////////////////////优化transferAllGrouping/////////////////////////
+
     /**
      * Get the current load for the given tasks
      * @param tasks the tasks to look for.

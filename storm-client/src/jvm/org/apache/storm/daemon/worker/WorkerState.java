@@ -246,7 +246,8 @@ public class WorkerState {
     private final Set<Integer> outboundTasks;
     private final AtomicLong nextUpdate = new AtomicLong(0);
     private final boolean trySerializeLocal;
-    private final TransferDrainer drainer;
+    //private final TransferDrainer drainer;
+    private final AllGroupingTransferDrainer groupingTransferDrainer;
 
     private static final long LOAD_REFRESH_INTERVAL_MS = 5000L;
 
@@ -317,7 +318,8 @@ public class WorkerState {
         if (trySerializeLocal) {
             LOG.warn("WILL TRY TO SERIALIZE ALL TUPLES (Turn off {} for production", Config.TOPOLOGY_TESTING_ALWAYS_TRY_SERIALIZE);
         }
-        this.drainer = new TransferDrainer();
+        //this.drainer = new TransferDrainer();
+        this.groupingTransferDrainer=new AllGroupingTransferDrainer();
 
     }
 
@@ -549,31 +551,35 @@ public class WorkerState {
     public void transferAllGrouping(KryoTupleSerializer serializer, List<BatchTuple> batchTuples) {
         for(BatchTuple batchTuple:batchTuples){
             LOG.info("the time of start serializing : {}", System.currentTimeMillis());
+            LOG.info("transferAllGrouping batchTuple :{}",batchTuple);
+            List<AddressedTuple> local = new ArrayList<>();
+            Map<NodeInfo, WorkerMessage> remoteMap = new HashMap<>();
+            Map<Integer, NodeInfo> integerNodeInfoMap = cachedTaskToNodePort.get();
+
             Tuple tuple = batchTuple.getTuple();
             List<Integer> outTasks = batchTuple.getOutTasks();
+
             if (trySerializeLocal) {
                 assertCanSerializeAllGrouping(serializer, tuple);
             }
 
-            List<AddressedTuple> local = new ArrayList<>();
-            Map<Integer, List<TaskMessage>> remoteMap = new HashMap<>();
             byte[] serializeByte = serializer.serialize(tuple);
-
             for(Integer destTask:outTasks){
                 if(taskIds.contains(destTask)){
                     // Local task
                     local.add(new AddressedTuple(destTask,tuple));
                 }else {
-                    // Using java objects directly to avoid performance issues in java code
-                    if (! remoteMap.containsKey(destTask)) {
-                        remoteMap.put(destTask, new ArrayList<>());
+                    // Using java objects directly to avoid performance issues in java code Arrays.asList(new WorkerMessage(Arrays.asList(destTask),serializeByte))
+                    NodeInfo nodeInfo = integerNodeInfoMap.get(destTask);
+                    if (!remoteMap.containsKey(nodeInfo)) {
+                        remoteMap.put(nodeInfo, new WorkerMessage(new ArrayList<>(),serializeByte));
                     }
-                    remoteMap.get(destTask).add(new TaskMessage(destTask,serializeByte));
+                    remoteMap.get(nodeInfo).tasks().add(destTask);
                 }
             }
 
             LOG.info("the time of end serializing : {}", System.currentTimeMillis());
-
+            LOG.info("transferAllGrouping remoteMap : {}",remoteMap);
             if (!local.isEmpty()) {
                 transferLocal(local);
             }
@@ -586,18 +592,35 @@ public class WorkerState {
 
     // TODO: consider having a max batch size besides what disruptor does automagically to prevent latency issues
     public void sendTuplesToRemoteWorker(HashMap<Integer, ArrayList<TaskMessage>> packets, long seqId, boolean batchEnd) {
-        drainer.add(packets);
+//        drainer.add(packets);
+//        if (batchEnd) {
+//            ReentrantReadWriteLock.ReadLock readLock = endpointSocketLock.readLock();
+//            try {
+//                readLock.lock();
+//                drainer.send(cachedTaskToNodePort.get(), cachedNodeToPortSocket.get());
+//            } finally {
+//                readLock.unlock();
+//            }
+//            drainer.clear();
+//        }
+    }
+
+    ////////////////////////////////////优化transferAllGrouping/////////////////////////
+    // TODO: consider having a max batch size besides what disruptor does automagically to prevent latency issues
+    public void sendTuplesToRemoteWorkerAllGrouping(HashMap<NodeInfo, WorkerMessage> packets, long seqId, boolean batchEnd) {
+        groupingTransferDrainer.add(packets);
         if (batchEnd) {
             ReentrantReadWriteLock.ReadLock readLock = endpointSocketLock.readLock();
             try {
                 readLock.lock();
-                drainer.send(cachedTaskToNodePort.get(), cachedNodeToPortSocket.get());
+                groupingTransferDrainer.send(cachedNodeToPortSocket.get());
             } finally {
                 readLock.unlock();
             }
-            drainer.clear();
+            groupingTransferDrainer.clear();
         }
     }
+    ////////////////////////////////////优化transferAllGrouping/////////////////////////
 
 
     private void assertCanSerialize(KryoTupleSerializer serializer, List<AddressedTuple> tuples) {

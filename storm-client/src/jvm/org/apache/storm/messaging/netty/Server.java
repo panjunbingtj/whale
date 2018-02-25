@@ -22,23 +22,11 @@ import org.apache.storm.grouping.Load;
 import org.apache.storm.messaging.ConnectionWithStatus;
 import org.apache.storm.messaging.IConnectionCallback;
 import org.apache.storm.messaging.TaskMessage;
+import org.apache.storm.messaging.WorkerMessage;
 import org.apache.storm.metric.api.IMetric;
 import org.apache.storm.metric.api.IStatefulObject;
 import org.apache.storm.serialization.KryoValuesSerializer;
 import org.apache.storm.utils.ObjectReader;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFactory;
@@ -48,7 +36,15 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class Server extends ConnectionWithStatus implements IStatefulObject, ISaslServer {
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+
+class  Server extends ConnectionWithStatus implements IStatefulObject, ISaslServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
     @SuppressWarnings("rawtypes")
@@ -128,7 +124,7 @@ class Server extends ConnectionWithStatus implements IStatefulObject, ISaslServe
      * enqueue a received message
      * @throws InterruptedException
      */
-    protected void enqueue(List<TaskMessage> msgs, String from) throws InterruptedException {
+    protected void enqueue(List<WorkerMessage> msgs, String from) throws InterruptedException {
         if (null == msgs || msgs.size() == 0 || closing) {
             return;
         }
@@ -179,7 +175,7 @@ class Server extends ConnectionWithStatus implements IStatefulObject, ISaslServe
     public void sendLoadMetrics(Map<Integer, Double> taskToLoad) {
         try {
             MessageBatch mb = new MessageBatch(1);
-            mb.add(new TaskMessage(-1, _ser.serialize(Arrays.asList((Object)taskToLoad))));
+            mb.add(new WorkerMessage(Arrays.asList(-1), _ser.serialize(Arrays.asList((Object)taskToLoad))));
             allChannels.write(mb);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -197,7 +193,7 @@ class Server extends ConnectionWithStatus implements IStatefulObject, ISaslServe
     }
 
     @Override
-    public void send(Iterator<TaskMessage> msgs) {
+    public void send(WorkerMessage msgs) {
       throw new UnsupportedOperationException("Server connection should not send any messages");
     }
 
@@ -268,8 +264,9 @@ class Server extends ConnectionWithStatus implements IStatefulObject, ISaslServe
     }
 
     public void received(Object message, String remote, Channel channel)  throws InterruptedException {
-        List<TaskMessage>msgs = (List<TaskMessage>)message;
-        enqueue(msgs, remote);
+        List<WorkerMessage> messages = (List<WorkerMessage>) message;
+        LOG.info("Server received WorkerMessage : {}",messages);
+        enqueue(messages, remote);
     }
 
     public String name() {

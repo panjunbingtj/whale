@@ -60,6 +60,7 @@ public class ExecutorTransferAllGrouping implements EventHandler, Callable {
     // batchTransferQueue也就是Executor的发送队列。
     public void transferBatchTuple(List<Integer> outTasks, Tuple tuple) {
         BatchTuple val = new BatchTuple(outTasks, tuple);
+        LOG.info("transferBatchTuple BatchTuple : {}",val);
         if (isDebug) {
             LOG.info("TRANSFERRING tuple {}", val);
         }

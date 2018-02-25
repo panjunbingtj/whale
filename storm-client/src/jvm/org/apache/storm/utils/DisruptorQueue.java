@@ -32,6 +32,7 @@ import com.lmax.disruptor.WaitStrategy;
 import com.lmax.disruptor.dsl.ProducerType;
 
 import org.apache.storm.Config;
+import org.apache.storm.messaging.WorkerMessage;
 import org.apache.storm.metric.api.IStatefulObject;
 import org.apache.storm.metric.internal.RateTracker;
 import org.slf4j.Logger;
@@ -518,7 +519,10 @@ public class DisruptorQueue implements IStatefulObject {
         } else if (obj instanceof HashMap) {
             tupleCount = 0;
             for (Object value:((HashMap) obj).values()) {
-                tupleCount += ((ArrayList) value).size();
+                if(value instanceof WorkerMessage)
+                    tupleCount += 1;
+                else if(value instanceof ArrayList)
+                    tupleCount += ((ArrayList) value).size();
             }
         } else {
             tupleCount = 1;

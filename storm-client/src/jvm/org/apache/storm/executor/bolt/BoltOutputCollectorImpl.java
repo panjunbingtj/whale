@@ -104,7 +104,7 @@ public class BoltOutputCollectorImpl implements IOutputCollector {
         for (Map.Entry<Long, Long> entry : anchorsToIds.entrySet()) {
             executor.sendUnanchored(taskData, Acker.ACKER_ACK_STREAM_ID,
                     new Values(entry.getKey(), Utils.bitXor(entry.getValue(), ackValue)),
-                    executor.getExecutorTransfer());
+                    executor.getExecutorTransferAllGrouping());
         }
         long delta = tupleTimeDelta((TupleImpl) input);
         if (isDebug) {
@@ -123,7 +123,7 @@ public class BoltOutputCollectorImpl implements IOutputCollector {
         Set<Long> roots = input.getMessageId().getAnchors();
         for (Long root : roots) {
             executor.sendUnanchored(taskData, Acker.ACKER_FAIL_STREAM_ID,
-                    new Values(root), executor.getExecutorTransfer());
+                    new Values(root), executor.getExecutorTransferAllGrouping());
         }
         long delta = tupleTimeDelta((TupleImpl) input);
         if (isDebug) {
@@ -142,7 +142,7 @@ public class BoltOutputCollectorImpl implements IOutputCollector {
         Set<Long> roots = input.getMessageId().getAnchors();
         for (Long root : roots) {
             executor.sendUnanchored(taskData, Acker.ACKER_RESET_TIMEOUT_STREAM_ID,
-                    new Values(root), executor.getExecutorTransfer());
+                    new Values(root), executor.getExecutorTransferAllGrouping());
         }
     }
 

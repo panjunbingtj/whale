@@ -71,18 +71,20 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
     //13.当有消息发送到Worker中时。Worker接收线程从接收队列中读取TaskMessage序列化后的数据，然后将其进行反序列化操作。最终得到带有消息头的AddressTuple。
     //然后调用回调函数的transfer方法。
     @Override
-    public void recv(List<TaskMessage> batch) {
+    public void recv(List<WorkerMessage> batch) {
         KryoTupleDeserializer des = _des.get();
-        ArrayList<AddressedTuple> ret = new ArrayList<>(batch.size());
-        LOG.info("the time of start deserializing : {}", System.currentTimeMillis());
-        for (TaskMessage message: batch) {
-            Tuple tuple = des.deserialize(message.message());
-            AddressedTuple addrTuple = new AddressedTuple(message.task(), tuple);
-            updateMetrics(tuple.getSourceTask(), message);
-            ret.add(addrTuple);
+        for(WorkerMessage workerMessage : batch){
+            ArrayList<AddressedTuple> ret = new ArrayList<>(workerMessage.tasks().size());
+            LOG.info("the time of start deserializing : {}", System.currentTimeMillis());
+            Tuple tuple = des.deserialize(workerMessage.message());
+            for(Integer taskid : workerMessage.tasks()){
+                AddressedTuple addrTuple = new AddressedTuple(taskid, tuple);
+                ret.add(addrTuple);
+            }
+            updateMetrics(tuple.getSourceTask(), workerMessage);
+            LOG.info("the time of end deserializing : {}", System.currentTimeMillis());
+            cb.transfer(ret);
         }
-        LOG.info("the time of end deserializing : {}", System.currentTimeMillis());
-        cb.transfer(ret);
     }
 
     /**
@@ -109,12 +111,14 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
      * @param sourceTaskId source task
      * @param message serialized message
      */
-    protected void updateMetrics(int sourceTaskId, TaskMessage message) {
+    protected void updateMetrics(int sourceTaskId, WorkerMessage message) {
         if (sizeMetricsEnabled) {
-            int dest = message.task();
-            int len = message.message().length;
-            String key = Integer.toString(sourceTaskId) + "-" + Integer.toString(dest);
-            byteCounts.computeIfAbsent(key, k -> new AtomicLong(0L)).addAndGet(len);
+            for(Integer taskid:message.tasks()){
+                int dest = taskid;
+                int len = message.message().length;
+                String key = Integer.toString(sourceTaskId) + "-" + Integer.toString(dest);
+                byteCounts.computeIfAbsent(key, k -> new AtomicLong(0L)).addAndGet(len);
+            }
         }
     }
 

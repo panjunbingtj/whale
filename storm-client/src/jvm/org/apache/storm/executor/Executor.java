@@ -206,7 +206,7 @@ public abstract class Executor implements Callable, EventHandler<Object> {
             try {
                 Task task = new Task(executor, taskId);
                 executor.sendUnanchored(
-                        task, StormCommon.SYSTEM_STREAM_ID, new Values("startup"), executor.getExecutorTransfer());
+                        task, StormCommon.SYSTEM_STREAM_ID, new Values("startup"), executor.getExecutorTransferAllGrouping());
                 idToTask.put(taskId, task);
             } catch (IOException ex) {
                 throw Utils.wrapInRuntime(ex);
@@ -305,7 +305,7 @@ public abstract class Executor implements Callable, EventHandler<Object> {
                 }
                 if (!dataPoints.isEmpty()) {
                     sendUnanchored(taskData, Constants.METRICS_STREAM_ID,
-                            new Values(taskInfo, dataPoints), executorTransfer);
+                            new Values(taskInfo, dataPoints), executorTransferAllGrouping);
                 }
             }
         } catch (Exception e) {
@@ -329,12 +329,10 @@ public abstract class Executor implements Callable, EventHandler<Object> {
         }
     }
 
-    public void sendUnanchored(Task task, String stream, List<Object> values, ExecutorTransfer transfer) {
+    public void sendUnanchored(Task task, String stream, List<Object> values, ExecutorTransferAllGrouping transfer) {
         Tuple tuple = task.getTuple(stream, values);
         List<Integer> tasks = task.getOutgoingTasks(stream, values);
-        for (Integer t : tasks) {
-            transfer.transfer(t, tuple);
-        }
+        transfer.transferBatchTuple(tasks,tuple);
     }
 
     /**
@@ -351,7 +349,7 @@ public abstract class Executor implements Callable, EventHandler<Object> {
         if (spct > 0 && (random.nextDouble() * 100) < spct) {
             sendUnanchored(taskData, StormCommon.EVENTLOGGER_STREAM_ID,
                     new Values(componentId, messageId, System.currentTimeMillis(), values),
-                    executor.getExecutorTransfer());
+                    executor.getExecutorTransferAllGrouping());
         }
     }
 

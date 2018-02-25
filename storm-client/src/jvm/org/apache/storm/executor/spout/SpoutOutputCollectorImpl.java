@@ -123,7 +123,7 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
         ////////////////////////////////////优化SpoutOutputCollector/////////////////////////
 
         LOG.info("the time of copying end: {}", System.currentTimeMillis());
-
+        LOG.info("the time of transferring tuple : {}", System.currentTimeMillis());
         if (isEventLoggers) {
             executor.sendToEventLogger(executor, taskData, values, executor.getComponentId(), messageId, random);
         }
@@ -147,7 +147,7 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
 
             pending.put(rootId, info);
             List<Object> ackInitTuple = new Values(rootId, Utils.bitXorVals(ackSeq), this.taskId);
-            executor.sendUnanchored(taskData, Acker.ACKER_INIT_STREAM_ID, ackInitTuple, executor.getExecutorTransfer());
+            executor.sendUnanchored(taskData, Acker.ACKER_INIT_STREAM_ID, ackInitTuple, executor.getExecutorTransferAllGrouping());
         } else if (messageId != null) {
             TupleInfo info = new TupleInfo();
             info.setStream(stream);

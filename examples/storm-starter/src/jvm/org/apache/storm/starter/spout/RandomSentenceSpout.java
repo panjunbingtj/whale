@@ -31,10 +31,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RandomSentenceSpout extends BaseRichSpout {
   private static final Logger LOG = LoggerFactory.getLogger(RandomSentenceSpout.class);
   private static boolean flag = true;
+  private int index=0;
+  private ConcurrentHashMap<UUID,Values> pending; //用来记录tuple的msgID，和tuple
   SpoutOutputCollector _collector;
   Random _rand;
 
@@ -43,11 +47,12 @@ public class RandomSentenceSpout extends BaseRichSpout {
   public void open(Map<String, Object> conf, TopologyContext context, SpoutOutputCollector collector) {
     _collector = collector;
     _rand = new Random();
+    this.pending=new ConcurrentHashMap<UUID, Values>();
   }
 
   @Override
   public void nextTuple() {
-    if (flag){
+    if(flag) {
       Utils.sleep(100);
       String[] sentences = new String[]{sentence("the cow jumped over the moon"), sentence("an apple a day keeps the doctor away"),
               sentence("four score and seven years ago"), sentence("snow white and the seven dwarfs"), sentence("i am at two with nature")};
@@ -56,8 +61,13 @@ public class RandomSentenceSpout extends BaseRichSpout {
       LOG.debug("Emitting tuple: {}", sentence);
 
       LOG.info("the time of emitting tuple : {}", System.currentTimeMillis());
-      _collector.emit(new Values(sentence));
-      flag = false;
+      UUID uuid=UUID.randomUUID();
+      Values value=new Values(sentence);
+      pending.put(uuid,value);
+      _collector.emit(value,uuid);
+      index++;
+      if(index>=100)
+        flag=false;
     }
   }
 
@@ -66,11 +76,15 @@ public class RandomSentenceSpout extends BaseRichSpout {
   }
 
   @Override
-  public void ack(Object id) {
+  public void ack(Object msgId) {
+     LOG.info("ack: "+msgId +" vaule: "+pending.get(msgId).toString());
+     pending.remove(msgId);
   }
 
   @Override
-  public void fail(Object id) {
+  public void fail(Object msgId) {
+      LOG.info("fail: "+msgId);
+      _collector.emit(pending.get(msgId),msgId);
   }
 
   @Override

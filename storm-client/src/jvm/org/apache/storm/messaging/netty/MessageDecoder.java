@@ -17,15 +17,16 @@
  */
 package org.apache.storm.messaging.netty;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.storm.messaging.TaskMessage;
+import org.apache.storm.messaging.WorkerMessage;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
 
+import java.util.ArrayList;
+import java.util.List;
+
+////////////////////////////////////优化transferAllGrouping/////////////////////////
 public class MessageDecoder extends FrameDecoder {    
     /*
      * Each ControlMessage is encoded as:
@@ -99,7 +100,7 @@ public class MessageDecoder extends FrameDecoder {
                 return new SaslMessageToken(payload.array());
             }
 
-            // case 3: task Message
+            // case 3: Worker Message
 
             // Make sure that we have received at least an integer (length)
             if (available < 4) {
@@ -108,13 +109,19 @@ public class MessageDecoder extends FrameDecoder {
                 break;
             }
 
+            // Read the tasks_id field
+            List<Integer> task_ids=new ArrayList<>();
+            for(int i=0;i<code;i++){
+                task_ids.add((int)buf.readShort());
+            }
+
             // Read the length field.
             int length = buf.readInt();
 
-            available -= 4;
+            available -= 4+2*code;
 
             if (length <= 0) {
-                ret.add(new TaskMessage(code, null));
+                ret.add(new WorkerMessage(task_ids, null));
                 break;
             }
 
@@ -132,7 +139,7 @@ public class MessageDecoder extends FrameDecoder {
 
             // Successfully decoded a frame.
             // Return a TaskMessage object
-            ret.add(new TaskMessage(code, payload.array()));
+            ret.add(new WorkerMessage(task_ids, payload.array()));
         }
 
         if (ret.size() == 0) {
