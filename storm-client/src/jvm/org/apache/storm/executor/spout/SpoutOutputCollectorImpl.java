@@ -106,7 +106,8 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
         boolean needAck = (messageId != null) && hasAckers;
 
         long rootId = MessageId.generateId(random);
-        LOG.info("the time of copying start: {}", System.currentTimeMillis());
+        if(isDebug)
+            LOG.info("the time of copying start: {}", System.currentTimeMillis());
 
         ////////////////////////////////////优化SpoutOutputCollector/////////////////////////
         MessageId msgId;
@@ -122,8 +123,11 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
         executor.getExecutorTransferAllGrouping().transferBatchTuple(outTasks,tuple);
         ////////////////////////////////////优化SpoutOutputCollector/////////////////////////
 
-        LOG.info("the time of copying end: {}", System.currentTimeMillis());
-        LOG.info("the time of transferring tuple : {}", System.currentTimeMillis());
+        if(isDebug){
+            LOG.info("the time of copying end: {}", System.currentTimeMillis());
+            LOG.info("the time of transferring tuple : {}", System.currentTimeMillis());
+        }
+
         if (isEventLoggers) {
             executor.sendToEventLogger(executor, taskData, values, executor.getComponentId(), messageId, random);
         }

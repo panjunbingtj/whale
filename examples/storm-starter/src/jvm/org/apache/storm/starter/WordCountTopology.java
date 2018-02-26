@@ -103,7 +103,7 @@ public class WordCountTopology extends ConfigurableTopology {
     //builder.setBolt("split", new SplitSentenceForCountBolt(), 3).allGrouping("spout");
     //builder.setBolt("count", new WordCount(), 12).fieldsGrouping("split", new Fields("word"));
 
-    conf.setDebug(true);
+    //conf.setDebug(true);
 
     String topologyName = "word-count";
 

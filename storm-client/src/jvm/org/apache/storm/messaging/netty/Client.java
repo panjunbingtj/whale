@@ -269,7 +269,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
      */
     @Override
     public void send(WorkerMessage msgs) {
-        LOG.info("Client send msg : {}",msgs);
+        LOG.debug("Client send msg : {}",msgs);
         if (closing) {
             int numMessages = msgs.tasks().size();
             LOG.error("discarding {} messages because the Netty client to {} is being closed", numMessages,
@@ -363,7 +363,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
         }
 
         final int numMessages = batch.size();
-        LOG.info("writing {} messages to channel {}", batch.size(), channel.toString());
+        LOG.debug("writing {} messages to channel {}", batch.size(), channel.toString());
         pendingMessages.addAndGet(numMessages);
 
         ChannelFuture future = channel.write(batch);
@@ -371,7 +371,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
             public void operationComplete(ChannelFuture future) throws Exception {
                 pendingMessages.addAndGet(0 - numMessages);
                 if (future.isSuccess()) {
-                    LOG.info("sent {} messages to {}", numMessages, dstAddressPrefixedName);
+                    LOG.debug("sent {} messages to {}", numMessages, dstAddressPrefixedName);
                     messagesSent.getAndAdd(batch.size());
                 } else {
                     LOG.error("failed to send {} messages to {}: {}", numMessages, dstAddressPrefixedName,

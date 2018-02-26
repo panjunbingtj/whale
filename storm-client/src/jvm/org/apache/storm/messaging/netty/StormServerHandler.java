@@ -59,7 +59,7 @@ public class StormServerHandler extends SimpleChannelUpstreamHandler  {
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
       Object msgs = e.getMessage();
-      LOG.info("StormServerHandler received Message : {}",msgs);
+      LOG.debug("StormServerHandler received Message : {}",msgs);
       if (msgs == null) {
         return;
       }

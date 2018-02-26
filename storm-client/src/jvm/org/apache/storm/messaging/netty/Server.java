@@ -265,7 +265,7 @@ class  Server extends ConnectionWithStatus implements IStatefulObject, ISaslServ
 
     public void received(Object message, String remote, Channel channel)  throws InterruptedException {
         List<WorkerMessage> messages = (List<WorkerMessage>) message;
-        LOG.info("Server received WorkerMessage : {}",messages);
+        LOG.debug("Server received WorkerMessage : {}",messages);
         enqueue(messages, remote);
     }
 

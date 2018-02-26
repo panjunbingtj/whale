@@ -51,7 +51,7 @@ public class AllGroupingTransferDrainer {
       if (null != connection) {
         List<WorkerMessage> bundle = entry.getValue();
         for(WorkerMessage workerMessage :bundle){
-          LOG.info("NodeInfo : {} WorkerMessage: {}",hostPort,workerMessage);
+          LOG.debug("NodeInfo : {} WorkerMessage: {}",hostPort,workerMessage);
           connection.send(workerMessage);
         }
       } else {

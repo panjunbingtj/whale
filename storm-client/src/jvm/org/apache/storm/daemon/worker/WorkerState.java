@@ -517,7 +517,7 @@ public class WorkerState {
     // 如果需要发送到本地worker的taskid，我们调用WorkerState的transferLocal方法发送到本地。本地发送不需要序列化
     // 需要发送到远程Worker的消息，序列化后进行打包成Map<Integer, List<TaskMessage>>对象发送到Worker的传输队列中去
     public void transfer(KryoTupleSerializer serializer, List<AddressedTuple> tupleBatch) {
-        LOG.info("the time of start serializing : {}", System.currentTimeMillis());
+        LOG.debug("the time of start serializing : {}", System.currentTimeMillis());
         if (trySerializeLocal) {
             assertCanSerialize(serializer, tupleBatch);
         }
@@ -537,7 +537,7 @@ public class WorkerState {
                 remoteMap.get(destTask).add(new TaskMessage(destTask, serializer.serialize(addressedTuple.getTuple())));
             }
         }
-        LOG.info("the time of end serializing : {}", System.currentTimeMillis());
+        LOG.debug("the time of end serializing : {}", System.currentTimeMillis());
 
         if (!local.isEmpty()) {
             transferLocal(local);
@@ -550,8 +550,8 @@ public class WorkerState {
     ////////////////////////////////////优化transferAllGrouping/////////////////////////
     public void transferAllGrouping(KryoTupleSerializer serializer, List<BatchTuple> batchTuples) {
         for(BatchTuple batchTuple:batchTuples){
-            LOG.info("the time of start serializing : {}", System.currentTimeMillis());
-            LOG.info("transferAllGrouping batchTuple :{}",batchTuple);
+            LOG.debug("the time of start serializing : {}", System.currentTimeMillis());
+            LOG.debug("transferAllGrouping batchTuple :{}",batchTuple);
             List<AddressedTuple> local = new ArrayList<>();
             Map<NodeInfo, WorkerMessage> remoteMap = new HashMap<>();
             Map<Integer, NodeInfo> integerNodeInfoMap = cachedTaskToNodePort.get();
@@ -578,8 +578,8 @@ public class WorkerState {
                 }
             }
 
-            LOG.info("the time of end serializing : {}", System.currentTimeMillis());
-            LOG.info("transferAllGrouping remoteMap : {}",remoteMap);
+            LOG.debug("the time of end serializing : {}", System.currentTimeMillis());
+            LOG.debug("transferAllGrouping remoteMap : {}",remoteMap);
             if (!local.isEmpty()) {
                 transferLocal(local);
             }
