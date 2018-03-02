@@ -17,8 +17,6 @@
  */
 package org.apache.storm.starter;
 
-import java.util.concurrent.TimeUnit;
-
 import org.apache.storm.Config;
 import org.apache.storm.StormSubmitter;
 import org.apache.storm.bolt.JoinBolt;
@@ -29,6 +27,8 @@ import org.apache.storm.topology.base.BaseWindowedBolt;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
 import org.apache.storm.utils.NimbusClient;
+
+import java.util.concurrent.TimeUnit;
 
 public class JoinBoltExample {
     public static void main(String[] args) throws Exception {
