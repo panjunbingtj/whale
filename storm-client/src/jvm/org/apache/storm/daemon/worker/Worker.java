@@ -68,7 +68,7 @@ public class Worker implements Shutdownable, DaemonCommon {
     private final String workerId;
     private final LogConfigManager logConfigManager;
 
-
+    //sdfdsf
     private WorkerState workerState;
     private AtomicReference<List<IRunningExecutor>> executorsAtom;
     private Thread transferThread;
