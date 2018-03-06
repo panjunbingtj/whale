@@ -392,6 +392,10 @@
         <module>examples/storm-jms-examples</module>
         <module>examples/storm-rocketmq-examples</module>
         <module>examples/storm-perf</module>
+
+        <!-- benchmakr -->
+        <module>benchmark/didiDataExchange</module>
+        <module>benchmark/didiOrderMatch</module>
     </modules>
 
     <dependencies>
