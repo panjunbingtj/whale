@@ -28,6 +28,6 @@ public interface IBasicBolt extends IComponent {
      * 
      * All acking is managed for you. Throw a FailedException if you want to fail the tuple.
      */
-    void execute(Tuple input, BasicOutputCollector collector) throws InterruptedException;
+    void execute(Tuple input, BasicOutputCollector collector);
     void cleanup();
 }

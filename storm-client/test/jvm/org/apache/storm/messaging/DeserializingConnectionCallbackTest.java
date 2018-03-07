@@ -27,22 +27,19 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class DeserializingConnectionCallbackTest {
     private static final byte [] messageBytes = new byte[3];
-    private static TaskMessage message;
+    private static WorkerMessage message;
 
     @Before
     public void setUp() throws Exception {
         // Setup a test message
-        message = mock(TaskMessage.class);
-        when(message.task()).thenReturn(456); // destination taskId
-        when(message.message()).thenReturn(messageBytes);
+//        message = mock(TaskMessage.class);
+//        when(message.task()).thenReturn(456); // destination taskId
+//        when(message.message()).thenReturn(messageBytes);
     }
 
 

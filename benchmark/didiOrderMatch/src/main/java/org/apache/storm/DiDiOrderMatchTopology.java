@@ -1,7 +1,10 @@
 package org.apache.storm;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.storm.kafka.spout.*;
+import org.apache.storm.kafka.spout.ByTopicRecordTranslator;
+import org.apache.storm.kafka.spout.KafkaSpoutConfig;
+import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
+import org.apache.storm.kafka.spout.KafkaSpoutRetryService;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
@@ -17,8 +20,11 @@ import static org.apache.storm.kafka.spout.KafkaSpoutConfig.FirstPollOffsetStrat
  */
 public class DiDiOrderMatchTopology {
     public static final String KAFKA_SPOTU_ID ="kafka-spout";
+    public static final String REPORT_BOLT_ID ="report-bolt";
     public static final String DIDIMATCH_BOLT_ID ="didiMatch-bolt";
     public static final String SPOUT_STREAM_ID ="spout_stream";
+    public static final String ACKCOUNT_STREAM_ID="ackcountstream";
+    public static final String LATENCYTIME_STREAM_ID="latencytimestream";
     public static final String KAFKA_LOCAL_BROKER = "node101:9092,node102:9092,node103:9092,node104:9092,node105:9092,node106:9092";
 
     public static void main(String[] args) throws Exception{
@@ -30,9 +36,9 @@ public class DiDiOrderMatchTopology {
 
         TopologyBuilder builder=new TopologyBuilder();
 
-        builder.setSpout(KAFKA_SPOTU_ID, new KafkaSpout<>(getKafkaSpoutConfig(KAFKA_LOCAL_BROKER,topic)), spoutInstancesNum);
+        builder.setSpout(KAFKA_SPOTU_ID, new DiDiOrdersSpout<>(getKafkaSpoutConfig(KAFKA_LOCAL_BROKER,topic)), spoutInstancesNum);
         builder.setBolt(DIDIMATCH_BOLT_ID, new DiDiMatchBolt(),boltInstancesNum).allGrouping(KAFKA_SPOTU_ID,SPOUT_STREAM_ID);
-
+        builder.setBolt(REPORT_BOLT_ID, new SpoutReportBolt(),1).shuffleGrouping(KAFKA_SPOTU_ID,ACKCOUNT_STREAM_ID).shuffleGrouping(KAFKA_SPOTU_ID,LATENCYTIME_STREAM_ID);
         Config config=new Config();
         config.setMessageTimeoutSecs(30);
 

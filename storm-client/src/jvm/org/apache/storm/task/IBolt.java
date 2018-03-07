@@ -18,8 +18,9 @@
 package org.apache.storm.task;
 
 import org.apache.storm.tuple.Tuple;
-import java.util.Map;
+
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * An IBolt represents a component that takes tuples as input and produces tuples

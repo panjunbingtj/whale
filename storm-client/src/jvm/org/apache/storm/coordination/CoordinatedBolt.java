@@ -17,31 +17,26 @@
  */
 package org.apache.storm.coordination;
 
-import org.apache.storm.topology.FailedException;
-import java.util.Map.Entry;
-import org.apache.storm.tuple.Values;
-import org.apache.storm.generated.GlobalStreamId;
-import java.util.Collection;
 import org.apache.storm.Constants;
+import org.apache.storm.generated.GlobalStreamId;
 import org.apache.storm.generated.Grouping;
 import org.apache.storm.task.IOutputCollector;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
+import org.apache.storm.topology.FailedException;
 import org.apache.storm.topology.IRichBolt;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
-import org.apache.storm.utils.Utils;
+import org.apache.storm.tuple.Values;
 import org.apache.storm.utils.TimeCacheMap;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import org.apache.storm.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.Serializable;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Coordination requires the request ids to be globally unique for awhile. This is so it doesn't get confused

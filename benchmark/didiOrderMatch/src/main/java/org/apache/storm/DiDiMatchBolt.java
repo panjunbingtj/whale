@@ -44,7 +44,7 @@ public class DiDiMatchBolt extends BaseBasicBolt {
         Order order=new Order(strs[0],strs[1],strs[2]);
 
         //simulation match function
-        waitForTimeMills(20+random.nextInt(81));
+        //waitForTimeMills(2);
     }
 
     @Override
