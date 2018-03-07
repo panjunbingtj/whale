@@ -583,6 +583,7 @@ public class KafkaSpout<K, V> extends BaseRichSpout {
                 + " This should never occur barring errors in the RetryService implementation or the spout code.");
             offsetManagers.get(msgId.getTopicPartition()).addToAckMsgs(msgId);
             emitted.remove(msgId);
+            latencyHashMap.remove(msgId);
         }
         tupleListener.onAck(msgId);
     }
