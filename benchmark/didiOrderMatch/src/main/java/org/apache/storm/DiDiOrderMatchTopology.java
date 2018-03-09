@@ -29,6 +29,7 @@ public class DiDiOrderMatchTopology {
     public static final String ACKCOUNT_STREAM_ID="ackcountstream";
     public static final String LATENCYTIME_STREAM_ID="latencytimestream";
     public static final String KAFKA_LOCAL_BROKER = "node101:9092,node102:9092,node103:9092,node104:9092,node105:9092,node106:9092";
+    //public static final String KAFKA_LOCAL_BROKER = "ubuntu1:9092,ubuntu2:9092,ubuntu4:9092";
 
     public static void main(String[] args) throws Exception{
         String topologyName=args[0];
@@ -44,6 +45,7 @@ public class DiDiOrderMatchTopology {
         builder.setBolt(THROUGHPUT_BOLT_ID, new ThroughputReportBolt(),1).shuffleGrouping(KAFKA_SPOTU_ID,ACKCOUNT_STREAM_ID);
         builder.setBolt(LATENCY_BOLT_ID, new LatencyReportBolt(),1).shuffleGrouping(KAFKA_SPOTU_ID,LATENCYTIME_STREAM_ID);
         Config config=new Config();
+        //config.setDebug(true);
         config.setMessageTimeoutSecs(30);
 
         if(args!=null && args.length <= 0){

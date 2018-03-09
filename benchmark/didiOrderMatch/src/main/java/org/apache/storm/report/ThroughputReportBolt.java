@@ -31,6 +31,7 @@ public class ThroughputReportBolt extends BaseRichBolt {
         this.outputCollector=outputCollector;
         int taskid=topologyContext.getThisTaskId();
         String throughputfileName="/storm/throughput-"+taskid;
+        //String throughputfileName="/home/TJ/throughput-"+taskid;
 
         try {
             throughputOutput=new BufferedOutputStream(new FileOutputStream(throughputfileName));

@@ -31,10 +31,11 @@ public class MessageDecoder extends FrameDecoder {
     /*
      * Each ControlMessage is encoded as:
      *  code (<0) ... short(2)
-     * Each TaskMessage is encoded as:
-     *  task (>=0) ... short(2)
+     * Each WorkerMessage is encoded as:
+     *  tasks_size short(2)
+     *  tasks_id ... List<short>(2)
      *  len ... int(4)
-     *  payload ... byte[]     *  
+     *  payload ... byte[]    *
      */
     protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buf) throws Exception {
         // Make sure that we have received at least a short 
@@ -103,7 +104,7 @@ public class MessageDecoder extends FrameDecoder {
             // case 3: Worker Message
 
             // Make sure that we have received at least an integer (length)
-            if (available < 4) {
+            if (available < 4+2*code) {
                 // need more data
                 buf.resetReaderIndex();
                 break;
@@ -118,7 +119,7 @@ public class MessageDecoder extends FrameDecoder {
             // Read the length field.
             int length = buf.readInt();
 
-            available -= 4+2*code;
+            available -= (4+2*code);
 
             if (length <= 0) {
                 ret.add(new WorkerMessage(task_ids, null));

@@ -17,17 +17,17 @@
  */
 package org.apache.storm.messaging.netty;
 
-import org.apache.storm.utils.ObjectReader;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.util.HashedWheelTimer;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.storm.Config;
 import org.apache.storm.messaging.IConnection;
 import org.apache.storm.messaging.IContext;
+import org.apache.storm.utils.ObjectReader;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jboss.netty.util.HashedWheelTimer;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 public class Context implements IContext {
     @SuppressWarnings("rawtypes")
