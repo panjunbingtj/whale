@@ -5,8 +5,6 @@ import org.apache.storm.kafka.spout.ByTopicRecordTranslator;
 import org.apache.storm.kafka.spout.KafkaSpoutConfig;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryService;
-import org.apache.storm.report.LatencyReportBolt;
-import org.apache.storm.report.ThroughputReportBolt;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
@@ -42,11 +40,9 @@ public class DiDiOrderMatchTopology {
 
         builder.setSpout(KAFKA_SPOTU_ID, new DiDiOrdersSpout<>(getKafkaSpoutConfig(KAFKA_LOCAL_BROKER,topic)), spoutInstancesNum);
         builder.setBolt(DIDIMATCH_BOLT_ID, new DiDiMatchBolt(),boltInstancesNum).allGrouping(KAFKA_SPOTU_ID,SPOUT_STREAM_ID);
-        builder.setBolt(THROUGHPUT_BOLT_ID, new ThroughputReportBolt(),1).shuffleGrouping(KAFKA_SPOTU_ID,ACKCOUNT_STREAM_ID);
-        builder.setBolt(LATENCY_BOLT_ID, new LatencyReportBolt(),1).shuffleGrouping(KAFKA_SPOTU_ID,LATENCYTIME_STREAM_ID);
         Config config=new Config();
         //config.setDebug(true);
-        //config.setNumAckers(0);
+        config.setNumAckers(0);
         config.setMessageTimeoutSecs(30);
 
         if(args!=null && args.length <= 0){

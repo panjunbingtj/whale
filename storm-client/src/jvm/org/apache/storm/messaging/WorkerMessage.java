@@ -40,7 +40,7 @@ public class WorkerMessage {
         if (packet==null) return;
         int size=packet.getShort();
         for(int i=0;i<size;i++){
-            _taskIds.add(Integer.valueOf(packet.getShort()));
+            _taskIds.add((int) packet.getShort());
         }
         _message = new byte[packet.limit()-2*size];
         packet.get(_message);

@@ -396,6 +396,7 @@
         <!-- benchmakr -->
         <module>benchmark/didiDataExchange</module>
         <module>benchmark/didiOrderMatch</module>
+        <module>benchmark/didiOrderMatchWhale</module>
     </modules>
 
     <dependencies>

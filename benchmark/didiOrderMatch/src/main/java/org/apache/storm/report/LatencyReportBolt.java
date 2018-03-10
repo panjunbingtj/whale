@@ -30,8 +30,8 @@ public class LatencyReportBolt extends BaseRichBolt {
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector){
         this.outputCollector=outputCollector;
         int taskid=topologyContext.getThisTaskId();
-        String latencyfileName="/storm/latency-"+taskid;
-        //String latencyfileName="/home/TJ/latency-"+taskid;
+        //String latencyfileName="/storm/latency-"+taskid;
+        String latencyfileName="/home/TJ/latency-"+taskid;
 
         try {
             latencyOutput=new BufferedOutputStream(new FileOutputStream(latencyfileName));

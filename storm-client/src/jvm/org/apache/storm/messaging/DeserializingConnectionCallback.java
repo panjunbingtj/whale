@@ -113,12 +113,10 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
      */
     protected void updateMetrics(int sourceTaskId, WorkerMessage message) {
         if (sizeMetricsEnabled) {
-            for(Integer taskid:message.tasks()){
-                int dest = taskid;
-                int len = message.message().length;
-                String key = Integer.toString(sourceTaskId) + "-" + Integer.toString(dest);
-                byteCounts.computeIfAbsent(key, k -> new AtomicLong(0L)).addAndGet(len);
-            }
+            List<Integer> dest = message.tasks();
+            int len = message.message().length;
+            String key = Integer.toString(sourceTaskId) + "-" + dest;
+            byteCounts.computeIfAbsent(key, k -> new AtomicLong(0L)).addAndGet(len);
         }
     }
 
