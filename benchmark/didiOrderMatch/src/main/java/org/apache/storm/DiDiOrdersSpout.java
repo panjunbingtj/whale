@@ -2,7 +2,6 @@ package org.apache.storm;
 
 import org.apache.storm.kafka.spout.KafkaSpout;
 import org.apache.storm.kafka.spout.KafkaSpoutConfig;
-import org.apache.storm.kafka.spout.KafkaSpoutMessageId;
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -56,11 +55,11 @@ public class DiDiOrdersSpout<K, V> extends KafkaSpout<K, V> {
     @Override
     public void ack(Object messageId) {
         ackcount++;
-        final KafkaSpoutMessageId msgId = (KafkaSpoutMessageId) messageId;
-        long staryTime=latencyHashMap.get(msgId);
-        long endTime=System.currentTimeMillis();
-        long latency=endTime-staryTime;
-        spoutOutputCollector.emit(LATENCYTIME_STREAM_ID,new Values(latency,endTime,thisTaskId));
+//        final KafkaSpoutMessageId msgId = (KafkaSpoutMessageId) messageId;
+//        long staryTime=latencyHashMap.get(msgId);
+//        long endTime=System.currentTimeMillis();
+//        long latency=endTime-staryTime;
+//        spoutOutputCollector.emit(LATENCYTIME_STREAM_ID,new Values(latency,endTime,thisTaskId));
         super.ack(messageId);
     }
 
