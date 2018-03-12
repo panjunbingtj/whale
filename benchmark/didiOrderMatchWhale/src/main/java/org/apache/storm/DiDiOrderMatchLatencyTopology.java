@@ -54,8 +54,8 @@ public class DiDiOrderMatchLatencyTopology {
 
     public static KafkaSpoutConfig<String, String> getKafkaSpoutConfig(String bootstrapServers,String topic) {
         ByTopicRecordTranslator<String, String> trans = new ByTopicRecordTranslator<>(
-                (r) -> new Values(r.topic(), r.partition(), r.offset(), r.key(), r.value()),
-                new Fields("topic", "partition", "offset", "key", "value"), SPOUT_STREAM_ID);
+                (r) -> new Values(r.topic(), r.partition(), r.offset(), r.key(), r.value(),System.currentTimeMillis()),
+                new Fields("topic", "partition", "offset", "key", "value", "timeinfo"), SPOUT_STREAM_ID);
 //        trans.forTopic(TOPIC_2,
 //                (r) -> new Values(r.topic(), r.partition(), r.offset(), r.key(), r.value()),
 //                new Fields("topic", "partition", "offset", "key", "value"), TOPIC_2_STREAM);
