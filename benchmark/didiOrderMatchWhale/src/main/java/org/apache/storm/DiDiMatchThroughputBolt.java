@@ -6,21 +6,31 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Tuple;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.*;
 
 /**
  * locate org.apache.storm
  * Created by mastertj on 2018/3/6.
  */
-public class DiDiMatchBolt extends BaseRichBolt {
+public class DiDiMatchThroughputBolt extends BaseRichBolt {
 
     private Set<String> drivers=new HashSet<>();
     private Random random=new Random();
 
+    private Timer timer;
+    private int thisTaskId =0;
+    private long tuplecount=0; //记录单位时间ACK的元组数量
     private OutputCollector outputCollector;
+
+    private BufferedOutputStream throughputOutput;
+
+    private static final String ACKCOUNT_STREAM_ID="tuplecountstream";
+
     private void waitForTimeMills(long timeMills){
         Long startTimeMllls=System.currentTimeMillis();
         while (true){
@@ -33,6 +43,33 @@ public class DiDiMatchBolt extends BaseRichBolt {
     @Override
     public void prepare(Map<String, Object> topoConf, TopologyContext context, OutputCollector collector) {
         this.outputCollector=collector;
+
+        thisTaskId=context.getThisTaskId();
+        timer=new Timer();
+        int taskid=context.getThisTaskId();
+        //String throughputfileName="/storm/throughput-"+taskid;
+        String throughputfileName="/home/TJ/throughput-"+taskid;
+
+        try {
+            throughputOutput=new BufferedOutputStream(new FileOutputStream(throughputfileName));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        //设置计时器没1s计算时间
+        timer.scheduleAtFixedRate(new TimerTask() {
+            public void run() {
+                //将最后结果输出到日志文件中
+                try {
+                    throughputOutput.write((tuplecount+"\t"+new Timestamp(System.currentTimeMillis())+"\n").getBytes("UTF-8"));
+                    throughputOutput.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                tuplecount = 0;
+            }
+        }, 1,10000);// 设定指定的时间time,此处为1000毫秒
+
     }
 
     @Override
@@ -44,18 +81,18 @@ public class DiDiMatchBolt extends BaseRichBolt {
         String value=input.getStringByField("value");
         String[] strs=value.split(",");
         Order order=new Order(strs[0],strs[1],strs[2]);
-        //outputCollector.ack(input);
+        tuplecount++;
         //simulation match function
         //waitForTimeMills(2);
     }
 
     @Override
-    public void declareOutputFields(OutputFieldsDeclarer declarer) {
+    public void cleanup() {
 
     }
 
     @Override
-    public void cleanup() {
+    public void declareOutputFields(OutputFieldsDeclarer declarer) {
 
     }
 

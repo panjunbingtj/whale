@@ -5,8 +5,6 @@ import org.apache.storm.kafka.spout.ByTopicRecordTranslator;
 import org.apache.storm.kafka.spout.KafkaSpoutConfig;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryService;
-import org.apache.storm.report.LatencyReportBolt;
-import org.apache.storm.report.ThroughputReportBolt;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
@@ -18,9 +16,9 @@ import static org.apache.storm.kafka.spout.KafkaSpoutConfig.FirstPollOffsetStrat
  * locate org.apache.storm.starter
  * Created by mastertj on 2018/3/5.
  * DiDi滴滴打车订单匹配Topology
- * storm jar didiOrderMatch-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchTopology DiDiOrderMatchTopology ordersTopic 30 1 60
+ * storm jar didiOrderMatchWhale-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchThroughputTopology DiDiOrderMatchThroughputTopology ordersTopic 30 1 60
  */
-public class DiDiOrderMatchTopology {
+public class DiDiOrderMatchThroughputTopology {
     public static final String KAFKA_SPOTU_ID ="kafka-spout";
     public static final String THROUGHPUT_BOLT_ID ="throughput-bolt";
     public static final String LATENCY_BOLT_ID ="latency-bolt";
@@ -41,13 +39,10 @@ public class DiDiOrderMatchTopology {
         TopologyBuilder builder=new TopologyBuilder();
 
         builder.setSpout(KAFKA_SPOTU_ID, new DiDiOrdersSpout<>(getKafkaSpoutConfig(KAFKA_LOCAL_BROKER,topic)), spoutInstancesNum);
-        builder.setBolt(DIDIMATCH_BOLT_ID, new DiDiMatchBolt(),boltInstancesNum).allGrouping(KAFKA_SPOTU_ID,SPOUT_STREAM_ID);
-        builder.setBolt(THROUGHPUT_BOLT_ID, new ThroughputReportBolt(),1).shuffleGrouping(KAFKA_SPOTU_ID,ACKCOUNT_STREAM_ID);
-        builder.setBolt(LATENCY_BOLT_ID, new LatencyReportBolt(),1).shuffleGrouping(KAFKA_SPOTU_ID,LATENCYTIME_STREAM_ID);
+        builder.setBolt(DIDIMATCH_BOLT_ID, new DiDiMatchThroughputBolt(),boltInstancesNum).allGrouping(KAFKA_SPOTU_ID,SPOUT_STREAM_ID);
         Config config=new Config();
         //config.setDebug(true);
         config.setNumAckers(0);
-        //config.setMessageTimeoutSecs(30);
 
         if(args!=null && args.length <= 0){
             Utils.sleep(50*1000);//50s
@@ -68,8 +63,8 @@ public class DiDiOrderMatchTopology {
                 .setProp(ConsumerConfig.GROUP_ID_CONFIG, "DiDiOrderMatchGroup")
                 .setRetry(getRetryService())
                 .setRecordTranslator(trans)
-                .setFirstPollOffsetStrategy(EARLIEST)
                 .setProcessingGuarantee(KafkaSpoutConfig.ProcessingGuarantee.AT_MOST_ONCE)
+                .setFirstPollOffsetStrategy(EARLIEST)
                 .build();
     }
 

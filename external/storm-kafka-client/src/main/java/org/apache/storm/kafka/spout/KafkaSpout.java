@@ -616,6 +616,7 @@ public class KafkaSpout<K, V> extends BaseRichSpout {
         } else {
             tupleListener.onRetry(msgId);
             emitted.remove(msgId);
+            latencyHashMap.remove(msgId);
         }
     }
 
