@@ -17,14 +17,14 @@ import java.util.Map;
  * 用来统计输出Spout输入源的延迟的Bolt
  */
 public class LatencyReportBolt extends BaseRichBolt {
-    private static Logger logger= LoggerFactory.getLogger(LatencyReportBolt.class);
+    private static Logger LOG= LoggerFactory.getLogger(LatencyReportBolt.class);
 
     private OutputCollector outputCollector;
 
 
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector){
         this.outputCollector=outputCollector;
-        logger.info("------------LatencyReportBolt prepare------------");
+        LOG.info("------------LatencyReportBolt prepare------------");
     }
 
     public void execute(Tuple tuple) {

@@ -45,11 +45,13 @@ public class DiDiMatchLatencyBolt extends BaseRichBolt {
         //设置计时器没1s计算时间
         timer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
-                double avgDelay= ((double) totalDelay / (double) tuplecount);
-                avgDelay=(double) Math.round(avgDelay*100)/100;
-                collector.emit(new Values(thisTaskId,avgDelay,startTimeMills));
-                totalDelay=0;
-                tuplecount=0;
+                if(startTimeMills!=0){
+                    double avgDelay= ((double) totalDelay / (double) tuplecount);
+                    avgDelay=(double) Math.round(avgDelay*100)/100;
+                    collector.emit(new Values(thisTaskId,avgDelay,startTimeMills));
+                    totalDelay=0;
+                    tuplecount=0;
+                }
             }
         }, 1,10000);// 设定指定的时间time,此处为10000毫秒
     }
@@ -58,6 +60,8 @@ public class DiDiMatchLatencyBolt extends BaseRichBolt {
     public void execute(Tuple input) {
         startTimeMills=input.getLongByField("timeinfo");
         Long delay=System.currentTimeMillis()-startTimeMills;
+        if(delay<0)
+            return;
         String topic=input.getStringByField("topic");
         Integer partition=input.getIntegerByField("partition");
         Long offset=input.getLongByField("offset");
@@ -80,7 +84,7 @@ public class DiDiMatchLatencyBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("taskid,avgDelay,timeinfo"));
+        declarer.declare(new Fields("taskid","avgDelay","timeinfo"));
     }
 
     public class Order{
