@@ -60,7 +60,7 @@ public class DiDiOrderMatchThroughputTopology {
 //                (r) -> new Values(r.topic(), r.partition(), r.offset(), r.key(), r.value()),
 //                new Fields("topic", "partition", "offset", "key", "value"), TOPIC_2_STREAM);
         return KafkaSpoutConfig.builder(bootstrapServers, new String[]{topic})
-                .setProp(ConsumerConfig.GROUP_ID_CONFIG, "DiDiOrderMatchGroup")
+                .setProp(ConsumerConfig.GROUP_ID_CONFIG, "DiDiOrderMatchThroughputGroup")
                 .setRetry(getRetryService())
                 .setRecordTranslator(trans)
                 .setProcessingGuarantee(KafkaSpoutConfig.ProcessingGuarantee.AT_MOST_ONCE)

@@ -4,13 +4,10 @@ import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
+import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.Values;
 
-import java.io.BufferedOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.*;
 
 /**
@@ -22,13 +19,12 @@ public class DiDiMatchLatencyBolt extends BaseRichBolt {
     private Set<String> drivers=new HashSet<>();
     private Random random=new Random();
 
-    private Timer timer;
     private int thisTaskId =0;
-    private long tuplecount=0; //记录单位时间ACK的元组数量
+    private Timer timer;
+    private int tuplecount=0;
+    private long totalDelay=0; //总和延迟 500个tuple
+    private long startTimeMills;
     private OutputCollector outputCollector;
-
-    private BufferedOutputStream throughputOutput;
-
     private static final String ACKCOUNT_STREAM_ID="tuplecountstream";
 
     private void waitForTimeMills(long timeMills){
@@ -46,33 +42,22 @@ public class DiDiMatchLatencyBolt extends BaseRichBolt {
 
         thisTaskId=context.getThisTaskId();
         timer=new Timer();
-        int taskid=context.getThisTaskId();
-        String throughputfileName="/home/TJ/throughput-"+taskid;
-
-        try {
-            throughputOutput=new BufferedOutputStream(new FileOutputStream(throughputfileName));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
         //设置计时器没1s计算时间
         timer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
-                //将最后结果输出到日志文件中
-                try {
-                    throughputOutput.write((tuplecount+"\t"+new Timestamp(System.currentTimeMillis())+"\n").getBytes("UTF-8"));
-                    throughputOutput.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                tuplecount = 0;
+                double avgDelay= ((double) totalDelay / (double) tuplecount);
+                avgDelay=(double) Math.round(avgDelay*100)/100;
+                collector.emit(new Values(thisTaskId,avgDelay,startTimeMills));
+                totalDelay=0;
+                tuplecount=0;
             }
-        }, 1,1000);// 设定指定的时间time,此处为1000毫秒
-
+        }, 1,10000);// 设定指定的时间time,此处为10000毫秒
     }
 
     @Override
     public void execute(Tuple input) {
+        startTimeMills=input.getLongByField("timeinfo");
+        Long delay=System.currentTimeMillis()-startTimeMills;
         String topic=input.getStringByField("topic");
         Integer partition=input.getIntegerByField("partition");
         Long offset=input.getLongByField("offset");
@@ -80,7 +65,10 @@ public class DiDiMatchLatencyBolt extends BaseRichBolt {
         String value=input.getStringByField("value");
         String[] strs=value.split(",");
         Order order=new Order(strs[0],strs[1],strs[2]);
+
         tuplecount++;
+        totalDelay+=delay;
+
         //simulation match function
         //waitForTimeMills(2);
     }
@@ -92,7 +80,7 @@ public class DiDiMatchLatencyBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-
+        declarer.declare(new Fields("taskid,avgDelay,timeinfo"));
     }
 
     public class Order{
