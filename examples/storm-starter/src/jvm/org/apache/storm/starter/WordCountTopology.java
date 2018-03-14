@@ -26,7 +26,7 @@ import org.apache.storm.topology.TopologyBuilder;
  * This topology demonstrates Storm's stream groupings and multilang
  * capabilities.
  * 提交任务
- * storm jar storm-starter-2.0.0-SNAPSHOT.jar org.apache.storm.starter.WordCountTopology wrodcount1
+ * storm jar storm-starter-2.0.0-SNAPSHOT.jar org.apache.storm.starter.WordCountTopology wordcount001 7 28
  */
 public class WordCountTopology extends ConfigurableTopology {
 //  public static class SplitSentence extends ShellBolt implements IRichBolt {
@@ -65,11 +65,6 @@ public class WordCountTopology extends ConfigurableTopology {
 //      declarer.declare(new Fields("word", "count"));
 //    }
 //  }
-
-  /*
-  * 提交命令：
-  * storm jar storm-starter-2.0.0-SNAPSHOT.jar org.apache.storm.starter.WordCountTopology wordcount001 140
-  * */
   public static void main(String[] args) throws Exception {
     ConfigurableTopology.start(new WordCountTopology(), args);
   }
@@ -79,20 +74,22 @@ public class WordCountTopology extends ConfigurableTopology {
     TopologyBuilder builder = new TopologyBuilder();
 
     builder.setSpout("spout", new RandomSentenceSpout(), 1);
-
+    Integer numworkers= Integer.valueOf(args[1]);
+    Integer splitInstancesNum=Integer.valueOf(args[2]);
 //    builder.setBolt("split", new SplitSentence(), 3).allGrouping("spout");
 //    int boltNum = 3;
 //    if(args != null && args.length > 1)
 //      boltNum = Integer.getInteger(args[1]);
 
-    builder.setBolt("split", new SplitSentenceForCountBolt(), 140).allGrouping("spout");
-//    builder.setBolt("count", new WordCount(), 12).fieldsGrouping("split", new Fields("word"));
+    builder.setBolt("split", new SplitSentenceForCountBolt(), splitInstancesNum).allGrouping("spout");
+    builder.setBolt("reportLatency", new LatencyReportBolt(), 1).shuffleGrouping("split");
 
     conf.setDebug(true);
 
     String topologyName = "word-count";
 
-    conf.setNumWorkers(8);
+    conf.setNumWorkers(numworkers);
+    conf.setNumAckers(0);
 
     if (args != null && args.length > 0) {
       topologyName = args[0];

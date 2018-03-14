@@ -57,7 +57,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class WorkerState {
 
     private static final Logger LOG = LoggerFactory.getLogger(WorkerState.class);
-
+    private long totalDelay=0;//增加测试序列化占比代码
     final Map<String, Object> conf;
     final IContext mqContext;
 
@@ -514,7 +514,8 @@ public class WorkerState {
     // 如果需要发送到本地worker的taskid，我们调用WorkerState的transferLocal方法发送到本地。本地发送不需要序列化
     // 需要发送到远程Worker的消息，序列化后进行打包成Map<Integer, List<TaskMessage>>对象发送到Worker的传输队列中去
     public void transfer(KryoTupleSerializer serializer, List<AddressedTuple> tupleBatch) {
-        LOG.info("the time of start serializing : {}", System.currentTimeMillis());
+        long startTimeMills = System.currentTimeMillis();
+        LOG.info("the time of start serializing : {}", startTimeMills);
         if (trySerializeLocal) {
             assertCanSerialize(serializer, tupleBatch);
         }
@@ -533,14 +534,17 @@ public class WorkerState {
                 remoteMap.get(destTask).add(new TaskMessage(destTask, serializer.serialize(addressedTuple.getTuple())));
             }
         }
-        LOG.info("the time of end serializing : {}", System.currentTimeMillis());
-
+        long endTimeMills = System.currentTimeMillis();
+        LOG.info("the time of end serializing : {}", endTimeMills);
+        long delayTime = endTimeMills - startTimeMills;
+        totalDelay+=(delayTime==0? 1 : delayTime);
         if (!local.isEmpty()) {
             transferLocal(local);
         }
         if (!remoteMap.isEmpty()) {
             transferQueue.publish(remoteMap);
         }
+        LOG.info("totalDelay:{} ",totalDelay);
     }
 
     // TODO: consider having a max batch size besides what disruptor does automagically to prevent latency issues

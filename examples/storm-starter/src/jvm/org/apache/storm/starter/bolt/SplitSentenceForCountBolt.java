@@ -18,10 +18,10 @@
 
 package org.apache.storm.starter.bolt;
 
+import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
-import org.apache.storm.topology.BasicOutputCollector;
 import org.apache.storm.topology.OutputFieldsDeclarer;
-import org.apache.storm.topology.base.BaseBasicBolt;
+import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
@@ -31,21 +31,26 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 
-public class SplitSentenceForCountBolt extends BaseBasicBolt {
+public class SplitSentenceForCountBolt extends BaseRichBolt {
     public static final String FIELDS = "word";
     private static final Logger LOG = LoggerFactory.getLogger(SplitSentenceForCountBolt.class);
     private Long tuples;
     private Long millionTuple;
-
+    private int thisTaskId=0;
+    private OutputCollector outputCollector;
     @Override
-    public void prepare(Map<String, Object> topoConf, TopologyContext context) {
+    public void prepare(Map<String, Object> topoConf, TopologyContext context, OutputCollector collector) {
         tuples = 0L;
         millionTuple = 0L;
+        this.thisTaskId = context.getThisTaskId();
+        this.outputCollector=collector;
     }
 
     @Override
-    public void execute(Tuple input, BasicOutputCollector collector) {
+    public void execute(Tuple input) {
 //        LOG.info("the time of receiving tuple in bolt: {}", System.currentTimeMillis());
+        Long startTimeMills = input.getLongByField("timeinfo");
+        Long endTimeMills=System.currentTimeMillis();
         if (tuples < 1000000){
             tuples++;
         }
@@ -53,16 +58,17 @@ public class SplitSentenceForCountBolt extends BaseBasicBolt {
             millionTuple++;
             tuples = 0L;
         }
-        LOG.info("the time of receiving {} million and {} tuple at {}", millionTuple, tuples, System.currentTimeMillis());
-
+        LOG.info("{}: the time of receiving {} million and {} tuple at {}", thisTaskId, millionTuple, tuples, endTimeMills);
+        Long delay=endTimeMills-startTimeMills;
+        outputCollector.emit(new Values(thisTaskId,delay,startTimeMills));
         for (String word : splitSentence(input.getString(0))) {
-            collector.emit(new Values(word));
+            //outputCollector.emit(new Values(word));
         }
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields(FIELDS));
+        declarer.declare(new Fields("taskid","delay","timeinfo"));
     }
 
 
@@ -72,4 +78,5 @@ public class SplitSentenceForCountBolt extends BaseBasicBolt {
         }
         return null;
     }
+
 }
