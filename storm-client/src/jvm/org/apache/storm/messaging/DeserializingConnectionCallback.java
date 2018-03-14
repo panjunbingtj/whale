@@ -73,8 +73,8 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
     @Override
     public void recv(List<WorkerMessage> batch) {
         KryoTupleDeserializer des = _des.get();
-        ArrayList<AddressedTuple> ret = new ArrayList<>();
         for(WorkerMessage workerMessage : batch){
+            ArrayList<AddressedTuple> ret = new ArrayList<>();
             LOG.debug("the time of start deserializing : {}", System.currentTimeMillis());
             Tuple tuple = des.deserialize(workerMessage.message());
             for(Integer taskid : workerMessage.tasks()){
@@ -83,8 +83,8 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
             }
             updateMetrics(tuple.getSourceTask(), workerMessage);
             LOG.debug("the time of end deserializing : {}", System.currentTimeMillis());
+            cb.transfer(ret);
         }
-        cb.transfer(ret);
     }
 
     /**

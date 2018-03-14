@@ -60,7 +60,7 @@ public class DiDiOrdersSpout<K, V> extends KafkaSpout<K, V> {
 //        long endTime=System.currentTimeMillis();
 //        long latency=endTime-staryTime;
 //        spoutOutputCollector.emit(LATENCYTIME_STREAM_ID,new Values(latency,endTime,thisTaskId));
-        super.ack(messageId);
+//        super.ack(messageId);
     }
 
     @Override
