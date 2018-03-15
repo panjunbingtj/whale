@@ -9,7 +9,9 @@ import org.junit.Test;
 public class TimeUtilsTest {
     @Test
     public void waitForTimeNanos() throws Exception {
-        TimeUtils.waitForTimeNanos(1000000);
+        PropertiesUtil.init("/storm-client-version-info.properties");
+        long delay=Long.valueOf(PropertiesUtil.getProperties("serializationtime"));
+        TimeUtils.waitForTimeNanos(delay);
     }
 
 }
