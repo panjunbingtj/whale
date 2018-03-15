@@ -47,8 +47,8 @@ public class DiDiMatchThroughputBolt extends BaseRichBolt {
         thisTaskId=context.getThisTaskId();
         timer=new Timer();
         int taskid=context.getThisTaskId();
-        //String throughputfileName="/storm/throughput-"+taskid;
-        String throughputfileName="/home/TJ/throughput-"+taskid;
+        String throughputfileName="/storm/throughput-"+taskid;
+        //String throughputfileName="/home/TJ/throughput-"+taskid;
 
         try {
             throughputOutput=new BufferedOutputStream(new FileOutputStream(throughputfileName));

@@ -27,8 +27,8 @@ public class DiDiOrderMatchLatencyTopology {
     public static final String SPOUT_STREAM_ID ="spout_stream";
     public static final String ACKCOUNT_STREAM_ID="ackcountstream";
     public static final String LATENCYTIME_STREAM_ID="latencytimestream";
-    //public static final String KAFKA_LOCAL_BROKER = "node101:9092,node102:9092,node103:9092,node104:9092,node105:9092,node106:9092";
-    public static final String KAFKA_LOCAL_BROKER = "ubuntu1:9092,ubuntu2:9092,ubuntu4:9092";
+    public static final String KAFKA_LOCAL_BROKER = "node101:9092,node102:9092,node103:9092,node104:9092,node105:9092,node106:9092";
+    //public static final String KAFKA_LOCAL_BROKER = "ubuntu1:9092,ubuntu2:9092,ubuntu4:9092";
 
     public static void main(String[] args) throws Exception{
         String topologyName=args[0];
@@ -62,7 +62,7 @@ public class DiDiOrderMatchLatencyTopology {
 //                (r) -> new Values(r.topic(), r.partition(), r.offset(), r.key(), r.value()),
 //                new Fields("topic", "partition", "offset", "key", "value"), TOPIC_2_STREAM);
         return KafkaSpoutConfig.builder(bootstrapServers, new String[]{topic})
-                .setProp(ConsumerConfig.GROUP_ID_CONFIG, "DiDiOrderMatchLatencyGroup")
+                .setProp(ConsumerConfig.GROUP_ID_CONFIG, "DiDiOrderMatchLatencyGroup1")
                 .setRetry(getRetryService())
                 .setRecordTranslator(trans)
                 .setProcessingGuarantee(KafkaSpoutConfig.ProcessingGuarantee.AT_MOST_ONCE)
