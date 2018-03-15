@@ -6,11 +6,13 @@ package org.apache.storm.utils;
  */
 public class TimeUtils {
     public static void waitForTimeMills(long timeMills){
-        Long startTimeMllls=System.currentTimeMillis();
-        while (true){
-            Long endTimeMills=System.currentTimeMillis();
-            if(endTimeMills-startTimeMllls>=timeMills)
-                break;
+        if(timeMills!=0) {
+            Long startTimeMllls = System.currentTimeMillis();
+            while (true) {
+                Long endTimeMills = System.currentTimeMillis();
+                if (endTimeMills - startTimeMllls >= timeMills)
+                    break;
+            }
         }
     }
 }

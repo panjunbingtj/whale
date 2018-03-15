@@ -247,6 +247,7 @@ public class WorkerState {
     private final TransferDrainer drainer;
 
     private static final long LOAD_REFRESH_INTERVAL_MS = 5000L;
+    private long delay=0;
 
     public WorkerState(Map<String, Object> conf, IContext mqContext, String topologyId, String assignmentId, int port, String workerId,
         Map<String, Object> topologyConf, IStateStorage stateStorage, IStormClusterState stormClusterState)
@@ -317,6 +318,7 @@ public class WorkerState {
         }
         this.drainer = new TransferDrainer();
         PropertiesUtil.init("/storm-client-version-info.properties");
+        delay=Long.valueOf(PropertiesUtil.getProperties("serializationtime"));
     }
 
     public void refreshConnections() {
@@ -532,7 +534,6 @@ public class WorkerState {
                     remoteMap.put(destTask, new ArrayList<>());
                 }
                 byte[] serialize = serializer.serialize(addressedTuple.getTuple());
-                long delay=Long.valueOf(PropertiesUtil.getProperties("serializationtime"));
                 TimeUtils.waitForTimeMills(delay);
                 remoteMap.get(destTask).add(new TaskMessage(destTask, serialize));
             }
