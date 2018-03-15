@@ -251,6 +251,8 @@ public class WorkerState {
 
     private static final long LOAD_REFRESH_INTERVAL_MS = 5000L;
 
+    private long delay=0;
+
     public WorkerState(Map<String, Object> conf, IContext mqContext, String topologyId, String assignmentId, int port, String workerId,
         Map<String, Object> topologyConf, IStateStorage stateStorage, IStormClusterState stormClusterState)
         throws IOException, InvalidTopologyException {
@@ -320,7 +322,8 @@ public class WorkerState {
         }
         //this.drainer = new TransferDrainer();
         this.groupingTransferDrainer=new AllGroupingTransferDrainer();
-
+        PropertiesUtil.init("/storm-client-version-info.properties");
+        delay=Long.valueOf(PropertiesUtil.getProperties("serializationtime"));
     }
 
     public void refreshConnections() {
@@ -564,6 +567,7 @@ public class WorkerState {
             }
 
             byte[] serializeByte = serializer.serialize(tuple);
+            TimeUtils.waitForTimeMills(delay);
             for(Integer destTask:outTasks){
                 if(taskIds.contains(destTask)){
                     // Local task
