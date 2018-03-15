@@ -25,6 +25,8 @@ import org.apache.storm.task.GeneralTopologyContext;
 import org.apache.storm.tuple.AddressedTuple;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.utils.ObjectReader;
+import org.apache.storm.utils.PropertiesUtil;
+import org.apache.storm.utils.TimeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +67,7 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
         this.context = context;
         cb = callback;
         sizeMetricsEnabled = ObjectReader.getBoolean(conf.get(Config.TOPOLOGY_SERIALIZED_MESSAGE_SIZE_METRICS), false);
-
+        PropertiesUtil.init("/storm-client-version-info.properties");
     }
 
     //13.当有消息发送到Worker中时。Worker接收线程从接收队列中读取TaskMessage序列化后的数据，然后将其进行反序列化操作。最终得到带有消息头的AddressTuple。
@@ -77,6 +79,8 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
         LOG.info("the time of deserializing start : {}", System.currentTimeMillis());
         for (TaskMessage message: batch) {
             Tuple tuple = des.deserialize(message.message());
+            long delay=Long.valueOf(PropertiesUtil.getProperties("serializationtime"));
+            TimeUtils.waitForTimeMills(delay);
             AddressedTuple addrTuple = new AddressedTuple(message.task(), tuple);
             updateMetrics(tuple.getSourceTask(), message);
             ret.add(addrTuple);

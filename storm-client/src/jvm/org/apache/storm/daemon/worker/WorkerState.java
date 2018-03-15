@@ -316,7 +316,7 @@ public class WorkerState {
             LOG.warn("WILL TRY TO SERIALIZE ALL TUPLES (Turn off {} for production", Config.TOPOLOGY_TESTING_ALWAYS_TRY_SERIALIZE);
         }
         this.drainer = new TransferDrainer();
-
+        PropertiesUtil.init("/storm-client-version-info.properties");
     }
 
     public void refreshConnections() {
@@ -531,7 +531,10 @@ public class WorkerState {
                 if (! remoteMap.containsKey(destTask)) {
                     remoteMap.put(destTask, new ArrayList<>());
                 }
-                remoteMap.get(destTask).add(new TaskMessage(destTask, serializer.serialize(addressedTuple.getTuple())));
+                byte[] serialize = serializer.serialize(addressedTuple.getTuple());
+                long delay=Long.valueOf(PropertiesUtil.getProperties("serializationtime"));
+                TimeUtils.waitForTimeMills(delay);
+                remoteMap.get(destTask).add(new TaskMessage(destTask, serialize));
             }
         }
         long endTimeMills = System.currentTimeMillis();
