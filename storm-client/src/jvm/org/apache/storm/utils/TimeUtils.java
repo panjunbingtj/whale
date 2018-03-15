@@ -10,7 +10,7 @@ public class TimeUtils {
             Long startTimeNanos = System.nanoTime();
             while (true) {
                 Long endTimeNanos = System.nanoTime();
-                if (endTimeNanos - startTimeNanos >= timeNanos)
+                if ((endTimeNanos - startTimeNanos) >= timeNanos)
                     break;
             }
         }
