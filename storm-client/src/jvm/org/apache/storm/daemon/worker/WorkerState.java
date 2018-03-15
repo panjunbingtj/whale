@@ -29,34 +29,16 @@ import org.apache.storm.cluster.VersionedData;
 import org.apache.storm.daemon.StormCommon;
 import org.apache.storm.daemon.supervisor.AdvancedFSOps;
 import org.apache.storm.executor.IRunningExecutor;
-import org.apache.storm.generated.Assignment;
-import org.apache.storm.generated.DebugOptions;
-import org.apache.storm.generated.Grouping;
-import org.apache.storm.generated.InvalidTopologyException;
-import org.apache.storm.generated.NodeInfo;
-import org.apache.storm.generated.StormBase;
-import org.apache.storm.generated.StormTopology;
-import org.apache.storm.generated.StreamInfo;
-import org.apache.storm.generated.TopologyStatus;
+import org.apache.storm.generated.*;
 import org.apache.storm.grouping.Load;
 import org.apache.storm.grouping.LoadMapping;
 import org.apache.storm.hooks.BaseWorkerHook;
-import org.apache.storm.messaging.ConnectionWithStatus;
-import org.apache.storm.messaging.DeserializingConnectionCallback;
-import org.apache.storm.messaging.IConnection;
-import org.apache.storm.messaging.IContext;
-import org.apache.storm.messaging.TaskMessage;
-import org.apache.storm.messaging.TransportFactory;
+import org.apache.storm.messaging.*;
 import org.apache.storm.serialization.KryoTupleSerializer;
 import org.apache.storm.task.WorkerTopologyContext;
 import org.apache.storm.tuple.AddressedTuple;
 import org.apache.storm.tuple.Fields;
-import org.apache.storm.utils.ConfigUtils;
-import org.apache.storm.utils.Utils;
-import org.apache.storm.utils.DisruptorQueue;
-import org.apache.storm.utils.ObjectReader;
-import org.apache.storm.utils.ThriftTopologyUtils;
-import org.apache.storm.utils.TransferDrainer;
+import org.apache.storm.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,8 +53,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class WorkerState {
 
@@ -268,6 +248,8 @@ public class WorkerState {
 
     private static final long LOAD_REFRESH_INTERVAL_MS = 5000L;
 
+    private long delay=0;
+
     public WorkerState(Map<String, Object> conf, IContext mqContext, String topologyId, String assignmentId, int port, String workerId,
         Map<String, Object> topologyConf, IStateStorage stateStorage, IStormClusterState stormClusterState)
         throws IOException, InvalidTopologyException {
@@ -337,6 +319,8 @@ public class WorkerState {
         }
         this.drainer = new TransferDrainer();
 
+        PropertiesUtil.init("/storm-client-version-info.properties");
+        delay=Long.valueOf(PropertiesUtil.getProperties("serializationtime"));
     }
 
     public void refreshConnections() {
@@ -543,7 +527,9 @@ public class WorkerState {
                 if (! remoteMap.containsKey(destTask)) {
                     remoteMap.put(destTask, new ArrayList<>());
                 }
-                remoteMap.get(destTask).add(new TaskMessage(destTask, serializer.serialize(addressedTuple.getTuple())));
+                byte[] serialize = serializer.serialize(addressedTuple.getTuple());
+                TimeUtils.waitForTimeNanos(delay);
+                remoteMap.get(destTask).add(new TaskMessage(destTask,serialize ));
             }
         }
 

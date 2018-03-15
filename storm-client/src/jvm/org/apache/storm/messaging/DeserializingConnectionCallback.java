@@ -25,6 +25,8 @@ import org.apache.storm.task.GeneralTopologyContext;
 import org.apache.storm.tuple.AddressedTuple;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.utils.ObjectReader;
+import org.apache.storm.utils.PropertiesUtil;
+import org.apache.storm.utils.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,13 +56,15 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
     private final boolean sizeMetricsEnabled;
     private final ConcurrentHashMap<String, AtomicLong> byteCounts = new ConcurrentHashMap<>();
 
+    private long delay=0;
 
     public DeserializingConnectionCallback(final Map conf, final GeneralTopologyContext context, WorkerState.ILocalTransferCallback callback) {
         this.conf = conf;
         this.context = context;
         cb = callback;
         sizeMetricsEnabled = ObjectReader.getBoolean(conf.get(Config.TOPOLOGY_SERIALIZED_MESSAGE_SIZE_METRICS), false);
-
+        PropertiesUtil.init("/storm-client-version-info.properties");
+        delay=Long.valueOf(PropertiesUtil.getProperties("serializationtime"));
     }
 
     @Override
@@ -69,6 +73,8 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
         ArrayList<AddressedTuple> ret = new ArrayList<>(batch.size());
         for (TaskMessage message: batch) {
             Tuple tuple = des.deserialize(message.message());
+
+            TimeUtils.waitForTimeNanos(delay);
             AddressedTuple addrTuple = new AddressedTuple(message.task(), tuple);
             updateMetrics(tuple.getSourceTask(), message);
             ret.add(addrTuple);
