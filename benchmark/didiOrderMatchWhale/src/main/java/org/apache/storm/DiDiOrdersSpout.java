@@ -14,7 +14,6 @@ import java.util.Map;
  * 重写KafkaSpout 增加一些性能测试Metrics
  */
 public class DiDiOrdersSpout<K, V> extends KafkaSpout<K, V> {
-
     public DiDiOrdersSpout(KafkaSpoutConfig<K, V> kafkaSpoutConfig) {
         super(kafkaSpoutConfig);
     }
