@@ -5,6 +5,7 @@ import org.apache.storm.kafka.spout.ByTopicRecordTranslator;
 import org.apache.storm.kafka.spout.KafkaSpoutConfig;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryService;
+import org.apache.storm.report.ThroughputReportBolt;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
@@ -40,6 +41,7 @@ public class DiDiOrderMatchThroughputTopology {
 
         builder.setSpout(KAFKA_SPOTU_ID, new DiDiOrdersSpout<>(getKafkaSpoutConfig(KAFKA_LOCAL_BROKER,topic)), spoutInstancesNum);
         builder.setBolt(DIDIMATCH_BOLT_ID, new DiDiMatchThroughputBolt(),boltInstancesNum).allGrouping(KAFKA_SPOTU_ID,SPOUT_STREAM_ID);
+        builder.setBolt(THROUGHPUT_BOLT_ID, new ThroughputReportBolt(),1).shuffleGrouping(DIDIMATCH_BOLT_ID);
         Config config=new Config();
         //config.setDebug(true);
         config.setNumAckers(0);

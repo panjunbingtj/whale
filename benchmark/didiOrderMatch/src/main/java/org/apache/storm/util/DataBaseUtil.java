@@ -42,4 +42,29 @@ public class DataBaseUtil {
             e.printStackTrace();
         }
     }
+
+    /**
+     * 插入数据到t_throughput表中
+     * @param taskId
+     * @param throughput
+     * @param timeinfo
+     */
+    public static void insertDiDiThroughput(int taskId , long throughput, Timestamp timeinfo){
+        try {
+            conn=JdbcPool.getConnection();
+            PreparedStatement preparedStatement;
+            String sql = "INSERT INTO t_throughput(taskid,throughput,time)"
+                    + " VALUES (?,?,?)";  // 插入数据的sql语句
+            preparedStatement = conn.prepareStatement(sql);    // 创建用于执行静态sql语句的Statement对象
+            preparedStatement.setInt(1,taskId);
+            preparedStatement.setLong(2,throughput);
+            preparedStatement.setTimestamp(3,timeinfo);
+            int count = preparedStatement.executeUpdate();  // 执行插入操作的sql语句，并返回插入数据的个数
+            preparedStatement.close();
+            //logger.info("insert into t_tuplecount (time,tuplecount) values"+time+" "+tuplecount);
+            JdbcPool.release(conn,preparedStatement,null);
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+    }
 }

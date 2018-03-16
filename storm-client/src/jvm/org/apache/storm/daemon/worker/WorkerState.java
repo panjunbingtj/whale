@@ -322,8 +322,8 @@ public class WorkerState {
         }
         //this.drainer = new TransferDrainer();
         this.groupingTransferDrainer=new AllGroupingTransferDrainer();
-        PropertiesUtil.init("/storm-client-version-info.properties");
-        delay=Long.valueOf(PropertiesUtil.getProperties("serializationtime"));
+        //PropertiesUtil.init("/storm-client-version-info.properties");
+        //delay=Long.valueOf(PropertiesUtil.getProperties("serializationtime"));
     }
 
     public void refreshConnections() {
@@ -567,7 +567,7 @@ public class WorkerState {
             }
 
             byte[] serializeByte = serializer.serialize(tuple);
-            TimeUtils.waitForTimeMills(delay);
+            //TimeUtils.waitForTimeMills(delay);
             for(Integer destTask:outTasks){
                 if(taskIds.contains(destTask)){
                     // Local task

@@ -5,13 +5,10 @@ import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Tuple;
+import org.apache.storm.util.DataBaseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Map;
 
@@ -23,22 +20,10 @@ public class ThroughputReportBolt extends BaseRichBolt {
     private static Logger logger= LoggerFactory.getLogger(ThroughputReportBolt.class);
 
     private OutputCollector outputCollector;
-    private BufferedOutputStream throughputOutput;
-
     private static final String ACKCOUNT_STREAM_ID="ackcountstream";
 
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector){
         this.outputCollector=outputCollector;
-        int taskid=topologyContext.getThisTaskId();
-        //String throughputfileName="/storm/throughput-"+taskid;
-        String throughputfileName="/home/TJ/throughput-"+taskid;
-
-        try {
-            throughputOutput=new BufferedOutputStream(new FileOutputStream(throughputfileName));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
         logger.info("------------ThroughputReportBolt prepare------------");
     }
 
@@ -50,13 +35,8 @@ public class ThroughputReportBolt extends BaseRichBolt {
 
             Timestamp timestamp = new Timestamp(currentTimeMills);
 
-            //将最后结果输出到日志文件中
-            try {
-                throughputOutput.write((tupplecount+"\t"+timestamp+"\n").getBytes("UTF-8"));
-                throughputOutput.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            //将最后结果输出到数据库中
+            DataBaseUtil.insertDiDiThroughput(taskid,tupplecount,timestamp);
         }
     }
 
@@ -66,10 +46,5 @@ public class ThroughputReportBolt extends BaseRichBolt {
 
     @Override
     public void cleanup() {
-        try {
-            throughputOutput.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }

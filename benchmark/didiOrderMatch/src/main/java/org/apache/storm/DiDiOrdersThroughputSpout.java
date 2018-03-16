@@ -55,12 +55,7 @@ public class DiDiOrdersThroughputSpout<K, V> extends KafkaSpout<K, V> {
     @Override
     public void ack(Object messageId) {
         ackcount++;
-//        final KafkaSpoutMessageId msgId = (KafkaSpoutMessageId) messageId;
-//        long staryTime=latencyHashMap.get(msgId);
-//        long endTime=System.currentTimeMillis();
-//        long latency=endTime-staryTime;
-//        spoutOutputCollector.emit(LATENCYTIME_STREAM_ID,new Values(latency,endTime,thisTaskId));
-//        super.ack(messageId);
+        super.ack(messageId);
     }
 
     @Override
@@ -77,7 +72,6 @@ public class DiDiOrdersThroughputSpout<K, V> extends KafkaSpout<K, V> {
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         super.declareOutputFields(outputFieldsDeclarer);
         outputFieldsDeclarer.declareStream(ACKCOUNT_STREAM_ID,new Fields("tuplecount","timeinfo","taskid"));
-        outputFieldsDeclarer.declareStream(LATENCYTIME_STREAM_ID,new Fields("latency","timeinfo","taskid"));
 
     }
 
