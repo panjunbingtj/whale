@@ -26,7 +26,7 @@ import org.apache.storm.topology.TopologyBuilder;
  * This topology demonstrates Storm's stream groupings and multilang
  * capabilities.
  * 提交任务
- * storm jar storm-starter-2.0.0-SNAPSHOT.jar org.apache.storm.starter.WordCountTopology wordcount001 7 28
+ * storm jar storm-starter-2.0.0-SNAPSHOT.jar org.apache.storm.starter.WordCountTopology wordCountTopology 30 30
  */
 public class WordCountTopology extends ConfigurableTopology {
 //  public static class SplitSentence extends ShellBolt implements IRichBolt {

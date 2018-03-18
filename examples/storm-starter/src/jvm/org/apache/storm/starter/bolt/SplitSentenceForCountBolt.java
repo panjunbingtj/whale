@@ -58,7 +58,7 @@ public class SplitSentenceForCountBolt extends BaseRichBolt {
             millionTuple++;
             tuples = 0L;
         }
-        LOG.info("{}: the time of receiving {} million and {} tuple at {}", thisTaskId, millionTuple, tuples, endTimeMills);
+        //LOG.info("{}: the time of receiving {} million and {} tuple at {}", thisTaskId, millionTuple, tuples, endTimeMills);
         Long delay=endTimeMills-startTimeMills;
         outputCollector.emit(new Values(thisTaskId,delay,startTimeMills));
         for (String word : splitSentence(input.getString(0))) {

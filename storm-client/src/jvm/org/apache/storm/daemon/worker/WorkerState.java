@@ -486,7 +486,7 @@ public class WorkerState {
 
     //14.调用用第一个步骤声明的transferLocal()方法 在Worker内部本地发送到相应的线程
     public void transferLocal(List<AddressedTuple> tupleBatch) {
-        LOG.info("the time of transferring end : {}", System.currentTimeMillis());
+        //LOG.info("the time of transferring end : {}", System.currentTimeMillis());
         Map<Integer, List<AddressedTuple>> grouped = new HashMap<>();
         for (AddressedTuple tuple : tupleBatch) {
             Integer executor = taskToShortExecutor.get(tuple.dest);
@@ -517,7 +517,7 @@ public class WorkerState {
     // 需要发送到远程Worker的消息，序列化后进行打包成Map<Integer, List<TaskMessage>>对象发送到Worker的传输队列中去
     public void transfer(KryoTupleSerializer serializer, List<AddressedTuple> tupleBatch) {
         long startTimeMills = System.currentTimeMillis();
-        LOG.info("the time of start serializing : {}", startTimeMills);
+        //LOG.info("the time of start serializing : {}", startTimeMills);
         if (trySerializeLocal) {
             assertCanSerialize(serializer, tupleBatch);
         }
@@ -539,7 +539,7 @@ public class WorkerState {
             }
         }
         long endTimeMills = System.currentTimeMillis();
-        LOG.info("the time of end serializing : {}", endTimeMills);
+        //LOG.info("the time of end serializing : {}", endTimeMills);
         long delayTime = endTimeMills - startTimeMills;
         totalDelay+=(delayTime==0? 1 : delayTime);
         if (!local.isEmpty()) {
