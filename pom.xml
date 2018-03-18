@@ -397,6 +397,8 @@
         <module>benchmark/didiDataExchange</module>
         <module>benchmark/didiOrderMatch</module>
         <module>benchmark/didiOrderMatchWhale</module>
+        <module>benchmark/NASDAQStockDeal</module>
+        <module>benchmark/NASDAQStockDealWhale</module>
     </modules>
 
     <dependencies>
