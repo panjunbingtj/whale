@@ -109,6 +109,11 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
         if(isDebug)
             LOG.info("the time of copying start: {}", System.currentTimeMillis());
 
+        /**
+         * Storm ACK 源码分析
+         * 2.Storm中每条发送出去的消息都会对应一个随机的消息ID,并且这个long类型的消息ID将保存到MessageId这个对象中去。
+         *  MessageId随着TupleImpl发送到下游相应的Bolt中去。
+         */
         ////////////////////////////////////优化SpoutOutputCollector/////////////////////////
         MessageId msgId;
         if (needAck) {
@@ -132,6 +137,11 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
             executor.sendToEventLogger(executor, taskData, values, executor.getComponentId(), messageId, random);
         }
 
+        /**
+         * Storm ACK 源码分析
+         * 1.首先Spout 发送一个锚定(anchored)的消息给Acker Bolt。Acker Bolt将这个tuple的rootId进行保存下来，并且保存
+         *  相应的_outAckVal(ACK值)以及Spout的TaskId。这个ACK值还是当前spout发送这个rootId对应的Tuples的异或值。
+         */
         boolean sample = false;
         try {
             sample = executor.getSampler().call();

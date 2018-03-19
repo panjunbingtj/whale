@@ -399,6 +399,7 @@
         <module>benchmark/didiOrderMatchWhale</module>
         <module>benchmark/NASDAQStockDeal</module>
         <module>benchmark/NASDAQStockDealWhale</module>
+        <module>benchmark/serializeBenchMark</module>
     </modules>
 
     <dependencies>
