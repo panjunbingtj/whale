@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -253,6 +254,9 @@ public class WorkerState {
 
     private long delay=0;
 
+    private java.util.Timer comm_timer=new java.util.Timer();
+    private long byteCounts=0L;
+
     public WorkerState(Map<String, Object> conf, IContext mqContext, String topologyId, String assignmentId, int port, String workerId,
         Map<String, Object> topologyConf, IStateStorage stateStorage, IStormClusterState stormClusterState)
         throws IOException, InvalidTopologyException {
@@ -324,6 +328,15 @@ public class WorkerState {
         this.groupingTransferDrainer=new AllGroupingTransferDrainer();
         //PropertiesUtil.init("/storm-client-version-info.properties");
         //delay=Long.valueOf(PropertiesUtil.getProperties("serializationtime"));
+        //设置计时器没1s计算时间
+        comm_timer.scheduleAtFixedRate(new java.util.TimerTask() {
+            public void run() {
+                if(byteCounts!=0) {
+                    //写入数据库和当前时间戳
+                    DataBaseUtil.insertDiDiThroughput(0,byteCounts,new Timestamp(System.currentTimeMillis()));
+                }
+            }
+        }, 1,5000);// 设定指定的时间time,此处为1000毫秒
     }
 
     public void refreshConnections() {
@@ -567,6 +580,13 @@ public class WorkerState {
             }
 
             byte[] serializeByte = serializer.serialize(tuple);
+            //add 每秒钟的通信量
+            try {
+                byteCounts+=(serializeByte.length+2+4+2*outTasks.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             //TimeUtils.waitForTimeMills(delay);
             for(Integer destTask:outTasks){
                 if(taskIds.contains(destTask)){
