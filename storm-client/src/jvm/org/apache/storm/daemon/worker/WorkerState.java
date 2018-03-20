@@ -580,12 +580,6 @@ public class WorkerState {
             }
 
             byte[] serializeByte = serializer.serialize(tuple);
-            //add 每秒钟的通信量
-            try {
-                byteCounts+=(serializeByte.length+2+4+2*outTasks.size());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
 
             //TimeUtils.waitForTimeMills(delay);
             for(Integer destTask:outTasks){
@@ -599,6 +593,17 @@ public class WorkerState {
                         remoteMap.put(nodeInfo, new WorkerMessage(new ArrayList<>(),serializeByte));
                     }
                     remoteMap.get(nodeInfo).tasks().add(destTask);
+                }
+            }
+
+            for(NodeInfo nodeInfo:remoteMap.keySet()){
+                WorkerMessage workerMessage = remoteMap.get(nodeInfo);
+                long serializeCounts=workerMessage.message().length;
+                //add 每秒钟的通信量
+                try {
+                    byteCounts+=(serializeCounts+2+4+2*workerMessage.tasks().size());
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
 
