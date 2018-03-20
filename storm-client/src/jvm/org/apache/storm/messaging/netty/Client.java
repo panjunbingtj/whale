@@ -23,7 +23,6 @@ import org.apache.storm.messaging.ConnectionWithStatus;
 import org.apache.storm.messaging.IConnectionCallback;
 import org.apache.storm.messaging.TaskMessage;
 import org.apache.storm.metric.api.IStatefulObject;
-import org.apache.storm.utils.DataBaseUtil;
 import org.apache.storm.utils.ObjectReader;
 import org.apache.storm.utils.StormBoundedExponentialBackoffRetry;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -39,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -135,9 +133,6 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
 
     private final Object writeLock = new Object();
 
-    private java.util.Timer comm_timer=new java.util.Timer();
-    private long byteCounts=0L;
-
     @SuppressWarnings("rawtypes")
     Client(Map<String, Object> topoConf, ChannelFactory factory, HashedWheelTimer scheduler, String host, int port, Context context) {
         this.topoConf = topoConf;
@@ -163,17 +158,6 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
         launchChannelAliveThread();
         scheduleConnect(NO_DELAY_MS);
         batcher = new MessageBuffer(messageBatchSize);
-
-        //设置计时器没1s计算时间
-        comm_timer.scheduleAtFixedRate(new java.util.TimerTask() {
-            public void run() {
-                if(byteCounts!=0) {
-                    //写入数据库和当前时间戳
-                    DataBaseUtil.insertDiDiThroughput(0,byteCounts,new Timestamp(System.currentTimeMillis()));
-                    byteCounts = 0;
-                }
-            }
-        }, 1,1000);// 设定指定的时间time,此处为1000毫秒
     }
 
     /**
@@ -388,13 +372,6 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
         }
 
         final int numMessages = batch.size();
-
-        //add 每秒钟的通信量
-        try {
-            byteCounts+=batch.getEncoded_length();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
         LOG.debug("writing {} messages to channel {}", batch.size(), channel.toString());
         pendingMessages.addAndGet(numMessages);
