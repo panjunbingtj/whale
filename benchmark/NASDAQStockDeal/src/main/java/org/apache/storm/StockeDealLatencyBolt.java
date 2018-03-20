@@ -73,7 +73,7 @@ public class StockeDealLatencyBolt extends BaseRichBolt {
         //simulation match function
         //waitForTimeMills(2);
         //TimeUtils.waitForTimeMills(executeTime);
-        outputCollector.ack(input);
+        //outputCollector.ack(input);
     }
 
     @Override

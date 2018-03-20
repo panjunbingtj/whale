@@ -38,7 +38,7 @@ public class StockDealTopology {
         builder.setBolt(STACKDEAL_BOLT_ID, new StockeDealThroughputBolt(),boltInstancesNum).allGrouping(KAFKA_SPOTU_ID,SPOUT_STREAM_ID);
         Config config=new Config();
         //config.setDebug(true);
-        //config.setNumAckers(0);
+        config.setNumAckers(0);
         //config.setMessageTimeoutSecs(30);
 
         if(args!=null && args.length <= 0){
@@ -61,7 +61,7 @@ public class StockDealTopology {
                 .setRetry(getRetryService())
                 .setRecordTranslator(trans)
                 .setFirstPollOffsetStrategy(EARLIEST)
-                .setProcessingGuarantee(KafkaSpoutConfig.ProcessingGuarantee.AT_LEAST_ONCE)
+                .setProcessingGuarantee(KafkaSpoutConfig.ProcessingGuarantee.AT_MOST_ONCE)
                 .build();
     }
 

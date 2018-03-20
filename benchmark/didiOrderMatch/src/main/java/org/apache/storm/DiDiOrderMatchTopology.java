@@ -35,10 +35,10 @@ public class DiDiOrderMatchTopology {
         TopologyBuilder builder=new TopologyBuilder();
 
         builder.setSpout(KAFKA_SPOTU_ID, new DiDiOrdersSpout<>(getKafkaSpoutConfig(KAFKA_LOCAL_BROKER,topic)), spoutInstancesNum);
-        builder.setBolt(DIDIMATCH_BOLT_ID, new DiDiMatchThroughputBolt(),boltInstancesNum).allGrouping(KAFKA_SPOTU_ID,SPOUT_STREAM_ID);
+        builder.setBolt(DIDIMATCH_BOLT_ID, new DiDiMatchBolt(),boltInstancesNum).allGrouping(KAFKA_SPOTU_ID,SPOUT_STREAM_ID);
         Config config=new Config();
         //config.setDebug(true);
-        //config.setNumAckers(0);
+        config.setNumAckers(0);
         //config.setMessageTimeoutSecs(30);
 
         if(args!=null && args.length <= 0){
@@ -61,7 +61,7 @@ public class DiDiOrderMatchTopology {
                 .setRetry(getRetryService())
                 .setRecordTranslator(trans)
                 .setFirstPollOffsetStrategy(EARLIEST)
-                .setProcessingGuarantee(KafkaSpoutConfig.ProcessingGuarantee.AT_LEAST_ONCE)
+                .setProcessingGuarantee(KafkaSpoutConfig.ProcessingGuarantee.AT_MOST_ONCE)
                 .build();
     }
 

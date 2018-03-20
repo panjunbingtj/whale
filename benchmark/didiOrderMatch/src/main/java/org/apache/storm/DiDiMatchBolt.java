@@ -15,7 +15,7 @@ import java.util.Set;
  * locate org.apache.storm
  * Created by mastertj on 2018/3/6.
  */
-public class StockDealBolt extends BaseRichBolt {
+public class DiDiMatchBolt extends BaseRichBolt {
 
     private Set<String> drivers=new HashSet<>();
     private Random random=new Random();
@@ -42,9 +42,11 @@ public class StockDealBolt extends BaseRichBolt {
         Long offset=input.getLongByField("offset");
         String key=input.getStringByField("key");
         String value=input.getStringByField("value");
-        String[] strs=value.split("\\s+");
+        String[] strs=value.split(",");
+        Order order=new Order(strs[0],strs[1],strs[2]);
         //outputCollector.ack(input);
         //simulation match function
+        //waitForTimeMills(2);
         //outputCollector.ack(input);
     }
 
@@ -56,5 +58,53 @@ public class StockDealBolt extends BaseRichBolt {
     @Override
     public void cleanup() {
 
+    }
+
+    public class Order{
+        private String orderId;
+        private String time;
+        private String matchDriverId;
+
+        public Order() {
+        }
+
+        public Order(String orderId, String time, String matchDriverId) {
+            this.orderId = orderId;
+            this.time = time;
+            this.matchDriverId = matchDriverId;
+        }
+
+        public String getOrderId() {
+            return orderId;
+        }
+
+        public void setOrderId(String orderId) {
+            this.orderId = orderId;
+        }
+
+        public String getTime() {
+            return time;
+        }
+
+        public void setTime(String time) {
+            this.time = time;
+        }
+
+        public String getMatchDriverId() {
+            return matchDriverId;
+        }
+
+        public void setMatchDriverId(String matchDriverId) {
+            this.matchDriverId = matchDriverId;
+        }
+
+        @Override
+        public String toString() {
+            return "Orders{" +
+                    "orderId='" + orderId + '\'' +
+                    ", time='" + time + '\'' +
+                    ", matchDriverId='" + matchDriverId + '\'' +
+                    '}';
+        }
     }
 }
