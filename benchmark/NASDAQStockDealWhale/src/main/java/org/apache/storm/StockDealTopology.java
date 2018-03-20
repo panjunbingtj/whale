@@ -16,7 +16,7 @@ import static org.apache.storm.kafka.spout.KafkaSpoutConfig.FirstPollOffsetStrat
  * locate org.apache.storm.starter
  * Created by mastertj on 2018/3/5.
  * NASDAQ股票交易Topology
- * storm jar NASDAQStockDealWhale-2.0.0-SNAPSHOT.jar org.apache.storm.StockDealTopology StockDealTopology ordersTopic_comm 30 1 60
+ * storm jar NASDAQStockDealWhale-2.0.0-SNAPSHOT.jar org.apache.storm.StockDealTopology StockDealTopology stockdealTopic_comm 30 1 60
  */
 public class StockDealTopology {
     public static final String KAFKA_SPOTU_ID ="kafka-spout";
