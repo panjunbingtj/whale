@@ -17,17 +17,17 @@
  */
 package org.apache.storm.utils;
 
+import com.google.common.collect.Maps;
+import org.apache.storm.generated.NodeInfo;
+import org.apache.storm.messaging.IConnection;
+import org.apache.storm.messaging.TaskMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.apache.storm.generated.NodeInfo;
-import org.apache.storm.messaging.IConnection;
-import org.apache.storm.messaging.TaskMessage;
-import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TransferDrainer {
 

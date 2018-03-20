@@ -35,6 +35,18 @@
 
     <dependencies>
         <!-- logging -->
+        <!-- https://mvnrepository.com/artifact/c3p0/c3p0 -->
+        <dependency>
+            <groupId>c3p0</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>0.9.1.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.34</version>
+        </dependency>
 
         <!--Hadoop Mini Cluster cannot use log4j2 bridge,
     Surefire has a way to exclude the conflicting log4j API jar
