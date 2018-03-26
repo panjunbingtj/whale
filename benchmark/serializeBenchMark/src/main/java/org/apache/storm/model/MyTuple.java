@@ -9,7 +9,9 @@ import java.util.List;
  */
 public class MyTuple implements Serializable{
     private final int taskid;
+
     private final String streamId;
+
     private final List<Object> values;
 
     public MyTuple(int taskid, String streamId, List<Object> values) {
@@ -38,4 +40,6 @@ public class MyTuple implements Serializable{
                 ", values=" + values +
                 '}';
     }
+
+
 }
