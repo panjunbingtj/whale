@@ -34,7 +34,7 @@ Based on the above analysis, we observe that efficient data transmission for one
 transfer scheme causes heavy CPU and network consumption for one-to-many based partition. To address the problem, in this work, we propose a novel distributed stream processing system called
 Whale. Whale leverages a novel worker-oriented design philosophy. Two factors contribute to the efficiency of the whale design. First, Whale exploits a novel tuple packaging strategy, which serializes the tuple to be sent to all the downstream instances only once.
 Second, it employs the worker-oriented transmit scheme, which sends tuples to the worker instead of a downstream instance. We implement Whale on top of Apache Storm and conduct compressive
-experiments to evaluate the performance of Whale.
+experiments to evaluate the performance of Whale. 
 
 Developers and contributors should also take a look at our [Developer documentation](DEVELOPER.md).
 
