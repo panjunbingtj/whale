@@ -24,9 +24,10 @@ with six million drivers and 74 million order records. We conduct the experiment
 to 480. Figures show the system throughput and latency decreases with theincrease of the parallelism degree.
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/Tjcug/storm/master/images/storm_latency.png" height="23%"  >
-<img src="https://raw.githubusercontent.com/Tjcug/storm/master/images/storm_throughput.png" height="23%" >
-<img src="https://raw.githubusercontent.com/Tjcug/storm/master/images/storm_proportion.png" height="23%" >
+
+<img src="https://raw.githubusercontent.com/Tjcug/storm/master/images/storm_latency.png" weight="23%" height="280px"  >
+<img src="https://raw.githubusercontent.com/Tjcug/storm/master/images/storm_throughput.png" weight="23%" height="280px" >
+<img src="https://raw.githubusercontent.com/Tjcug/storm/master/images/storm_proportion.png" weight="23%" height="280px" >
 </div>
  
 Based on the above analysis, we observe that efficient data transmission for one-to-many based partition is the key factor that influences the performance of DSPSs. Existing instance-oriented data
@@ -48,7 +49,7 @@ number of batches is the same as the number of destination workers. Next, the so
 the destination instances. Finally, the dispatcher sends the data item to the destination instances based on the identifications.
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/Tjcug/storm/master/images/storm_latency.png" height="23%"  >
+<img src="https://raw.githubusercontent.com/Tjcug/storm/master/images/whale_system_desgin.png" weight="23%" height="300px" >
 </div>
 
 ## Project lead
