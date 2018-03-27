@@ -24,9 +24,9 @@ with six million drivers and 74 million order records. We conduct the experiment
 to 480. Figures show the system throughput and latency decreases with theincrease of the parallelism degree.
 
 <div align="center">
-<img src="https://github.com/Tjcug/storm/tree/master/images/storm_latency.png" height="23%"  >
-<img src="https://github.com/Tjcug/storm/tree/master/images/storm_throughput.png" height="23%" >
-<img src="https://github.com/Tjcug/storm/tree/master/images/storm_proportion.png" height="23%" >
+<img src="https://raw.githubusercontent.com/Tjcug/storm/master/images/storm_latency.png" height="23%"  >
+<img src="https://raw.githubusercontent.com/Tjcug/storm/master/images/storm_throughput.png" height="23%" >
+<img src="https://raw.githubusercontent.com/Tjcug/storm/master/images/storm_proportion.png" height="23%" >
 </div>
  
 Based on the above analysis, we observe that efficient data transmission for one-to-many based partition is the key factor that influences the performance of DSPSs. Existing instance-oriented data
@@ -48,7 +48,7 @@ number of batches is the same as the number of destination workers. Next, the so
 the destination instances. Finally, the dispatcher sends the data item to the destination instances based on the identifications.
 
 <div align="center">
-<img src="https://github.com/Tjcug/storm/tree/master/images/whale_system_desgin.png" height="23%"  >
+<img src="https://raw.githubusercontent.com/Tjcug/storm/master/images/storm_latency.png" height="23%"  >
 </div>
 
 ## Project lead
@@ -58,6 +58,11 @@ the destination instances. Finally, the dispatcher sends the data item to the de
 * Yonghui Wang([@wyh](https://github.com/WYonghui/))
 * HaoPeng Jie([@jhp](https://github.com/jessezax/))
 
-## Acknowledgements
+## Author and Copyright
 
-YourKit is kindly supporting open source projects with its full-featured Java Profiler. YourKit, LLC is the creator of innovative and intelligent tools for profiling Java and .NET applications. Take a look at YourKit's leading software products: [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp) and [YourKit .NET Profiler](http://www.yourkit.com/.net/profiler/index.jsp).
+DStream is developed in Cluster and Grid Computing Lab, Services Computing Technology and System Lab, Big Data Technology and System Lab, School of Computer Science and Technology, Huazhong University of Science and Technology, Wuhan, China by Hanhua Chen (chen@hust.edu.cn), Fan Zhang(zhangf@hust.edu.cn), Hai Jin (hjin@hust.edu.cn), Jie Tan(tjmaster@hust.edu.cn)
+Yonghui Wang(wangyonghui@hust.edu.cn),HaoPeng Jie(jhp@hust.edu.cn)
+
+Copyright (C) 2017, [STCS & CGCL](http://grid.hust.edu.cn/) and [Huazhong University of Science and Technology](http://www.hust.edu.cn).
+
+
