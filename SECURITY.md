@@ -1,13 +1,12 @@
-# Running Apache Storm Securely
+# Running Whale Securely
 
-Apache Storm offers a range of configuration options when trying to secure
+Whale offers a range of configuration options when trying to secure
 your cluster.  By default all authentication and authorization is disabled but
-can be turned on as needed.  Many of these features only became available in
-Storm-0.10.
+can be turned on as needed. 
 
 ## Firewall/OS level Security
 
-You can still have a secure storm cluster without turning on formal
+You can still have a secure whale cluster without turning on formal
 Authentication and Authorization. But to do so usually requires
 configuring your Operating System to restrict the operations that can be done.
 This is generally a good idea even if you plan on running your cluster with Auth.
@@ -24,10 +23,10 @@ IPsec to encrypt all traffic being sent between the hosts in the cluster.
 
 ### Ports
 
-| Default Port | Storm Config | Client Hosts/Processes | Server |
+| Default Port | whale Config | Client Hosts/Processes | Server |
 |--------------|--------------|------------------------|--------|
 | 2181 | `storm.zookeeper.port` | Nimbus, Supervisors, and Worker processes | ZooKeeper |
-| 6627 | `nimbus.thrift.port` | Storm clients, Supervisors, and UI | Nimbus |
+| 6627 | `nimbus.thrift.port` | Whale clients, Supervisors, and UI | Nimbus |
 | 8080 | `ui.port` | Client Web Browsers | UI |
 | 8000 | `logviewer.port` | Client Web Browsers | Logviewer |
 | 3772 | `drpc.port` | External DRPC Clients | DRPC |
@@ -53,7 +52,7 @@ ui.filter.params: "param1":"value1"
 ```
 or by restricting the UI/log-viewers ports to only accept connections from localhost,
 and then front them with another web server, like Apache httpd, that can
-authenticate/authorize incoming connections and proxy the connection to the storm process.
+authenticate/authorize incoming connections and proxy the connection to the whale process.
 To make this work the ui process must have logviewer.port set to the port of the proxy
 in its `storm.yaml`, while the logviewers must have it set to the actual port that they
 are going to bind to.
@@ -62,7 +61,7 @@ The servlet filters are preferred because they allow individual topologies to
 specify who is (and who is not) allowed to access the pages associated with
 each topology.
 
-The Storm UI can be configured to use `AuthenticationFilter` from hadoop-auth.
+The whale UI can be configured to use `AuthenticationFilter` from hadoop-auth.
 ```yaml
 ui.filter: "org.apache.hadoop.security.authentication.server.AuthenticationFilter"
 ui.filter.params:
@@ -75,14 +74,14 @@ make sure to create a principal `HTTP/{hostname}` (here hostname should be the h
 
 Once configured, you must do `kinit` before accessing the UI.
 
-Here's an example of accessing Storm's API after the setup above:
+Here's an example of accessing Whale's API after the setup above:
 ```bash
-curl  -i --negotiate -u:anyUser  -b ~/cookiejar.txt -c ~/cookiejar.txt  http://storm-ui-hostname:8080/api/v1/cluster/summary
+curl  -i --negotiate -u:anyUser  -b ~/cookiejar.txt -c ~/cookiejar.txt  http://Whale-ui-hostname:8080/api/v1/cluster/summary
 ```
 
-1. Firefox: Go to `about:config` and search for `network.negotiate-auth.trusted-uris` double-click to add value "http://storm-ui-hostname:8080"
+1. Firefox: Go to `about:config` and search for `network.negotiate-auth.trusted-uris` double-click to add value "http://Whale-ui-hostname:8080"
 2. Google-chrome: start from command line with: `google-chrome --auth-server-whitelist="*storm-ui-hostname" --auth-negotiate-delegate-whitelist="*storm-ui-hostname"`
-3. IE: Configure trusted websites to include "storm-ui-hostname" and allow negotiation for that website
+3. IE: Configure trusted websites to include "Whale-ui-hostname" and allow negotiation for that website
 
 **Caution**: In AD MIT Kerberos setup, the key size is bigger than the default UI jetty server request header size. So make sure you set `ui.header.buffer.bytes` to 65536 in `storm.yaml`. More details are in [STORM-633](https://issues.apache.org/jira/browse/STORM-633)
 
@@ -161,7 +160,7 @@ keytool -keystore $DIR/server.keystore.jks -alias localhost -import -file $DIR/c
 
 ## Authentication (Kerberos)
 
-Storm offers pluggable authentication support through thrift and SASL.  This
+Whale offers pluggable authentication support through thrift and SASL.  This
 example only goes off of Kerberos as it is a common setup for most big data
 projects.
 
@@ -187,14 +186,14 @@ sudo kadmin.local -q 'addprinc storm@STORM.EXAMPLE.COM'
 sudo kadmin.local -q "ktadd -k /tmp/storm.keytab storm@STORM.EXAMPLE.COM"
 ```
 
-be sure to distribute the keytab(s) to the appropriate boxes and set the FS permissions so that only the headless user running ZK, or storm, has access to them.
+be sure to distribute the keytab(s) to the appropriate boxes and set the FS permissions so that only the headless user running ZK, or whale, has access to them.
 
-#### Storm Kerberos Configuration
+#### Whale Kerberos Configuration
 
-Both storm and ZooKeeper use jaas configuration files to log the user in.
+Both Whale and ZooKeeper use jaas configuration files to log the user in.
 Each jaas file may have multiple sections for different interfaces being used.
 
-To enable Kerberos authentication in storm you need to set the following `storm.yaml` configs
+To enable Kerberos authentication in Whale you need to set the following `storm.yaml` configs
 ```yaml
 storm.thrift.transport: "org.apache.storm.security.auth.kerberos.KerberosSaslTransportPlugin"
 java.security.auth.login.config: "/path/to/jaas.conf"
@@ -213,9 +212,9 @@ ui.childopts: "-Xmx768m -Djava.security.auth.login.config=/path/to/jaas.conf"
 supervisor.childopts: "-Xmx256m -Djava.security.auth.login.config=/path/to/jaas.conf"
 ```
 
-The jaas.conf file should look something like the following for the storm nodes.
-The StormServer section is used by nimbus and the DRPC nodes.  It does not need to be included on supervisor nodes.
-The StormClient section is used by all storm clients that want to talk to nimbus, including the ui, logviewer, and supervisor.  We will use this section on the gateways as well, but the structure of that will be a bit different.
+The jaas.conf file should look something like the following for the Whale nodes.
+The WhaleServer section is used by nimbus and the DRPC nodes.  It does not need to be included on supervisor nodes.
+The WhaleClient section is used by all Whale clients that want to talk to nimbus, including the ui, logviewer, and supervisor.  We will use this section on the gateways as well, but the structure of that will be a bit different.
 The Client section is used by processes wanting to talk to ZooKeeper and really only needs to be included with nimbus and the supervisors.
 The Server section is used by the ZooKeeper servers.
 Having unused sections in the jaas is not a problem.
@@ -328,7 +327,7 @@ And you want to include the jaas.conf on the command line when launching the ser
 
 #### Gateways
 
-Ideally the end user will only need to run `kinit` before interacting with storm.  To make this happen seamlessly we need the default jaas.conf on the gateways to be something like
+Ideally the end user will only need to run `kinit` before interacting with Whale.  To make this happen seamlessly we need the default jaas.conf on the gateways to be something like
 
 ```
 StormClient {
@@ -367,7 +366,7 @@ To ensure isolation of users in multi-tenancy, the supervisors must run under a 
 
 1. Add your chosen "headless user" to all supervisor hosts.
 2. Create unique group and make it the primary group for the headless user on the supervisor nodes.
-3. Then set following properties on storm for these supervisor nodes.
+3. Then set following properties on Whale for these supervisor nodes.
 
 ### Multi-tenant Scheduler
 
@@ -375,7 +374,7 @@ To support multi-tenancy better we have written a new scheduler.  To enable this
 ```yaml
 storm.scheduler: "org.apache.storm.scheduler.multitenant.MultitenantScheduler"
 ```
-Be aware that many of the features of this scheduler rely on storm authentication.  Without storm authentication, the scheduler will not know what the user is, and thus will not isolate topologies properly.
+Be aware that many of the features of this scheduler rely on Whale authentication.  Without Whale authentication, the scheduler will not know what the user is, and thus will not isolate topologies properly.
 
 The goal of the multi-tenant scheduler is to provide a way to isolate topologies from one another, but it also allows you to limit the total resources that an individual user can have in the cluster.
 
@@ -394,13 +393,13 @@ multitenant.scheduler.user.pools:
 ```
 
 ### Run worker processes as user who submitted the topology
-By default storm runs workers as the user that is running the supervisor.  This is not ideal for security.  To make storm run the topologies as the user that launched them set.
+By default Whale runs workers as the user that is running the supervisor.  This is not ideal for security.  To make Whale run the topologies as the user that launched them set.
 
 ```yaml
 supervisor.run.worker.as.user: true
 ```
 
-There are several files that go along with this that need to be configured properly to make storm secure.
+There are several files that go along with this that need to be configured properly to make Whale secure.
 
 The `worker-launcher` executable is a special program that allows the supervisor to launch workers as different users.  For this to work, `worker-launcher` needs to be owned by root, but with the group set to be a group that only the supervisor headless user is a part of.  `worker-launcher` also needs to have `6550` octal permissions.  There is also a `worker-launcher.cfg` file, usually located under /etc/, that should look something like the following:
 
@@ -412,7 +411,7 @@ where `worker_launcher_group` is the same group the supervisor user is a part of
 This config file also needs to be owned by root and *not* have world nor group write permissions.
 
 ### Impersonating a user
-A storm client may submit requests on behalf of another user. For example, if a `userX` submits an oozie workflow and as part of workflow execution if user `oozie` wants to submit a topology on behalf of `userX`
+A Whale client may submit requests on behalf of another user. For example, if a `userX` submits an oozie workflow and as part of workflow execution if user `oozie` wants to submit a topology on behalf of `userX`
 it can do so by leveraging the impersonation feature. In order to submit a topology as some other user, you can use the `StormSubmitter.submitTopologyAs` API. Alternatively you can use `NimbusClient.getConfiguredClientAs`
 to get a nimbus client as some other user and perform any nimbus action (i.e., kill/rebalance/activate/deactivate) using this client.
 
@@ -457,7 +456,7 @@ In addition Nimbus itself can be used to get credentials on behalf of the user s
 submission. You should use this config with `topology.auto-credentials` and `nimbus.credential.renewers.classes` so the credentials can be populated on the worker side and nimbus can automatically renew them. Currently there are 2 examples of using this config: AutoHDFS and AutoHBase, which auto-populate hdfs and hbase delegation tokens for topology submitter so they don't have to distribute keytabs on all possible worker hosts.
 
 ### Limits
-By default storm allows any sized topology to be submitted. But ZooKeeper and other components have limitations on how big a topology can actually be.  The following configs allow you to limit the maximum size a topology can be.
+By default Whale allows any sized topology to be submitted. But ZooKeeper and other components have limitations on how big a topology can actually be.  The following configs allow you to limit the maximum size a topology can be.
 
 | YAML Setting | Description |
 |------------|----------------------|
@@ -473,11 +472,11 @@ The Logviewer daemon now is also responsible for cleaning up old log files for d
 | `logviewer.cleanup.interval.secs` | Interval of time in seconds that the logviewer cleans up worker logs. |
 
 
-### Allowing specific users or groups to access storm
+### Allowing specific users or groups to access Whale
 
 With SimpleACLAuthorizer any user with a valid kerberos ticket can deploy a topology or do further operations such as activate, deactivate, access cluster information, etc.
 One can restrict this access by specifying `nimbus.users` or `nimbus.groups` in `storm.yaml`. If `nimbus.users` is configured then only the users in the list can deploy a topology or access the cluster.
-Similarly `nimbus.groups` restrict storm cluster access to users who belong to those groups.
+Similarly `nimbus.groups` restrict Whale cluster access to users who belong to those groups.
 
 E.g.:
 

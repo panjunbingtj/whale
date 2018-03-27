@@ -17,7 +17,8 @@ import static org.apache.storm.kafka.spout.KafkaSpoutConfig.FirstPollOffsetStrat
  * locate org.apache.storm.starter
  * Created by mastertj on 2018/3/5.
  * DiDi滴滴打车订单匹配Topology
- * storm jar didiOrderMatchWhale-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchLatencyTopology DiDiOrderMatchLatencyTopology ordersTopic_1 30 1 60 1
+ * storm jar didiOrderMatchWhale-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchLatencyTopology DiDiOrderMatchLatencyTopology ordersTopic_1 30 1 60 1\
+ * storm jar didiOrderMatchWhale-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchLatencyTopology DiDiOrderMatchLatencyTopology ordersTopic 7 1 120 1
  */
 public class DiDiOrderMatchLatencyTopology {
     public static final String KAFKA_SPOTU_ID ="kafka-spout";

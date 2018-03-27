@@ -1,117 +1,44 @@
-Master Branch:  
-[![Travis CI](https://travis-ci.org/apache/storm.svg?branch=master)](https://travis-ci.org/apache/storm)
-[![Maven Version](https://maven-badges.herokuapp.com/maven-central/org.apache.storm/storm-core/badge.svg)](http://search.maven.org/#search|gav|1|g:"org.apache.storm"%20AND%20a:"storm-core")
- 
-Storm is a distributed realtime computation system. Similar to how Hadoop provides a set of general primitives for doing batch processing, Storm provides a set of general primitives for doing realtime computation. Storm is simple, can be used with any programming language, [is used by many companies](http://storm.apache.org/documentation/Powered-By.html), and is a lot of fun to use!
+# Whale v1.0
 
-The [Rationale page](http://storm.apache.org/documentation/Rationale.html) explains what Storm is and why it was built. [This presentation](http://vimeo.com/40972420) is also a good introduction to the project.
-
-Storm has a website at [storm.apache.org](http://storm.apache.org). Follow [@stormprocessor](https://twitter.com/stormprocessor) on Twitter for updates on the project.
-
-## Documentation
-
-Documentation and tutorials can be found on the [Storm website](http://storm.apache.org/documentation/Home.html).
-
-Developers and contributors should also take a look at our [Developer documentation](DEVELOPER.md).
-
-
-## Getting help
-
-__NOTE:__ The google groups account storm-user@googlegroups.com is now officially deprecated in favor of the Apache-hosted user/dev mailing lists.
-
-### Storm Users
-Storm users should send messages and subscribe to [user@storm.apache.org](mailto:user@storm.apache.org).
-
-You can subscribe to this list by sending an email to [user-subscribe@storm.apache.org](mailto:user-subscribe@storm.apache.org). Likewise, you can cancel a subscription by sending an email to [user-unsubscribe@storm.apache.org](mailto:user-unsubscribe@storm.apache.org).
-
-You can also [browse the archives of the storm-user mailing list](http://mail-archives.apache.org/mod_mbox/storm-user/).
-
-### Storm Developers
-Storm developers should send messages and subscribe to [dev@storm.apache.org](mailto:dev@storm.apache.org).
-
-You can subscribe to this list by sending an email to [dev-subscribe@storm.apache.org](mailto:dev-subscribe@storm.apache.org). Likewise, you can cancel a subscription by sending an email to [dev-unsubscribe@storm.apache.org](mailto:dev-unsubscribe@storm.apache.org).
-
-You can also [browse the archives of the storm-dev mailing list](http://mail-archives.apache.org/mod_mbox/storm-dev/).
-
-Storm developers who would want to track the JIRA issues should subscribe to [issues@storm.apache.org](mailto:issues@storm.apache.org).
-
-You can subscribe to this list by sending an email to [issues-subscribe@storm.apache.org](mailto:issues-subscribe@storm.apache.org). Likewise, you can cancel a subscription by sending an email to [issues-unsubscribe@storm.apache.org](mailto:issues-unsubscribe@storm.apache.org).
-
-You can view the archives of the mailing list [here](http://mail-archives.apache.org/mod_mbox/storm-issues/).
-
-### Issue tracker
-In case you want to raise a bug/feature or propose an idea, please use [Apache Jira](https://issues.apache.org/jira/projects/STORM)
-
-### Which list should I send/subscribe to?
-If you are using a pre-built binary distribution of Storm, then chances are you should send questions, comments, storm-related announcements, etc. to [user@storm.apache.org](mailto:user@storm.apache.org).
-
-If you are building storm from source, developing new features, or otherwise hacking storm source code, then [dev@storm.apache.org](mailto:dev@storm.apache.org) is more appropriate.
-
-If you are committers and/or PMCs, or contributors looking for following up and participating development of Storm, then you would want to also subscribe [issues@storm.apache.org](issues@storm.apache.org) in addition to [dev@storm.apache.org](dev@storm.apache.org).
-
-### What will happen with storm-user@googlegroups.com?
-All existing messages will remain archived there, and can be accessed/searched [here](https://groups.google.com/forum/#!forum/storm-user).
-
-New messages sent to storm-user@googlegroups.com will either be rejected/bounced or replied to with a message to direct the email to the appropriate Apache-hosted group.
-
-### IRC
-You can also come to the #storm-user room on [freenode](http://freenode.net/). You can usually find a Storm developer there to help you out.
-
+Whale, a novel mechanism for efficient serialization and transferring stream data between processes for one-to-many communication in DSPSs. 
+Whale serializes messages before they are encapsulated into tuples in order to reduce serialize computation and transfers only once to each process to greatly
+improve the communication efficiency.We implement Whale on top of Apache Storm. Experiment results show that Whale significantly improves the performance of the existing design in terms of system
+throughput and process latency.
 ## License
 
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
+Whale is released under the [Apache 2 license](http://www.apache.org/licenses/LICENSE-2.0.html).
 
-  http://www.apache.org/licenses/LICENSE-2.0
+## Introduction
 
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
+By taking advantage of multi-core processors equipped machines in clusters, a distributed stream processing system (DSPS) provides efficient data parallelism, i.e., multiple instances of an operator are
+created and deployed on the cluster machines to process data in parallel, to improve stream processing throughput. Accordingly, a DSPS provides diverse data partition strategies to divide the workloads
+generated by an upstream instance among the downstream instances. Among the strategies, the one-to-many based partition becomes increasingly important, which broadcasts one tuple generated
+by an upstream instance to many downstream instances. Such partition strategy has been widely used in many large-scale applications, such as smart ride-sharing and stork trading.
 
+Existing DSPSs commonly implement the partition mechanisms based on instance oriented addressing, i.e., an upstream instance transmits the generated tuple to a downstream instance according to the
+address of the downstream instance. The downstream instances, however, may reside on the same machine. As a result, the source node needs to send tuples containing the same data item to the same destination machine repeatedly, raising heavy serialization
+and inter-server communication overhead.
+
+We examine the performance of the above one-to-many based partition strategy using large-scale data collected from Didi Chuxing.The dataset contains 13 billion trajectory records associated
+with six million drivers and 74 million order records. We conduct the experiment on top of a cluster with 30 machines, each equipped with a sixteen-core processor. The parallelism degree (i.e., the number of instances) for the order matcher operation varies from 30
+to 480. Figures show the system throughput and latency decreases with theincrease of the parallelism degree.
+
+<div align="center"><img src="http://pp.myapp.com/ma_pic2/0/shot_42391053_1_1488499316/550" height="330" width="190" >
+<img src="http://pp.myapp.com/ma_pic2/0/shot_42391053_2_1488499316/550" height="330" width="190" >
+<img src="http://pp.myapp.com/ma_pic2/0/shot_42391053_3_1488499316/550" height="330" width="190" >
+</div>
+ 
+Based on the above analysis, we observe that efficient data transmission for one-to-many based partition is the key factor that influences the performance of DSPSs. Existing instance-oriented data
+transfer scheme causes heavy CPU and network consumption for one-to-many based partition. To address the problem, in this work, we propose a novel distributed stream processing system called
+Whale. Whale leverages a novel worker-oriented design philosophy. Two factors contribute to the efficiency of the whale design. First, Whale exploits a novel tuple packaging strategy, which serializes the tuple to be sent to all the downstream instances only once.
+Second, it employs the worker-oriented transmit scheme, which sends tuples to the worker instead of a downstream instance. We implement Whale on top of Apache Storm and conduct compressive
+experiments to evaluate the performance of Whale.
+
+Developers and contributors should also take a look at our [Developer documentation](DEVELOPER.md).
 
 ## Project lead
 
 * Nathan Marz ([@nathanmarz](http://twitter.com/nathanmarz))
-
-## Committers
-
-* James Xu ([@xumingming](https://github.com/xumingming))
-* Jason Jackson ([@jason_j](http://twitter.com/jason_j))
-* Andy Feng ([@anfeng](https://github.com/anfeng))
-* Flip Kromer ([@mrflip](https://github.com/mrflip))
-* David Lao ([@davidlao2k](https://github.com/davidlao2k))
-* P. Taylor Goetz ([@ptgoetz](https://github.com/ptgoetz))
-* Derek Dagit ([@d2r](https://github.com/d2r))
-* Robert Evans ([@revans2](https://github.com/revans2))
-* Michael G. Noll ([@miguno](https://github.com/miguno))
-* Kishor Patil ([@kishorvpatil](https://github.com/kishorvpatil))
-* Sriharsha Chintalapani([@harshach](https://github.com/harshach))
-* Sean Zhong ([@clockfly] (http://github.com/clockfly))
-* Kyle Nusbaum ([@knusbaum](https://github.com/knusbaum))
-* Parth Brahmbhatt ([@Parth-Brahmbhatt](https://github.com/Parth-Brahmbhatt))
-* Jungtaek Lim ([@HeartSaVioR](https://github.com/HeartSaVioR))
-* Aaron Dossett ([@dossett](https://github.com/dossett))
-* Matthias J. Sax ([@mjsax](https://github.com/mjsax))
-* Arun Mahadevan ([@arunmahadevan](https://github.com/arunmahadevan))
-* Boyang Jerry Peng ([@jerrypeng](https://github.com/jerrypeng))
-* Zhuo Liu ([@zhuoliu](https://github.com/zhuoliu))
-* Haohui Mai ([@haohui](https://github.com/haohui))
-* Sanket Chintapalli ([@redsanket](https://github.com/redsanket))
-* Longda Feng ([@longda](https://github.com/longdafeng))
-* John Fang ([@hustfxj](https://github.com/hustfxj))
-* Abhishek Agarwal ([@abhishekagarwal87](https://github.com/abhishekagarwal87))
-* Satish Duggana ([@satishd](https://github.com/satishd))
-* Xin Wang ([@vesense](https://github.com/vesense))
-* Hugo da Cruz Louro ([@hmcl](https://github.com/hmcl))
-* Stig Rohde Døssing ([@srdo](https://github.com/srdo/))
 
 ## Acknowledgements
 
