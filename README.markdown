@@ -23,9 +23,10 @@ We examine the performance of the above one-to-many based partition strategy usi
 with six million drivers and 74 million order records. We conduct the experiment on top of a cluster with 30 machines, each equipped with a sixteen-core processor. The parallelism degree (i.e., the number of instances) for the order matcher operation varies from 30
 to 480. Figures show the system throughput and latency decreases with theincrease of the parallelism degree.
 
-<div align="center"><img src="http://pp.myapp.com/ma_pic2/0/shot_42391053_1_1488499316/550" height="330" width="190" >
-<img src="http://pp.myapp.com/ma_pic2/0/shot_42391053_2_1488499316/550" height="330" width="190" >
-<img src="http://pp.myapp.com/ma_pic2/0/shot_42391053_3_1488499316/550" height="330" width="190" >
+<div align="center">
+<img src="https://github.com/Tjcug/storm/images/storm_latency.png" height="23%"  >
+<img src="https://github.com/Tjcug/storm/images/storm_throughput.png" height="23%" >
+<img src="https://github.com/Tjcug/storm/images/storm_proportion.png" height="23%" >
 </div>
  
 Based on the above analysis, we observe that efficient data transmission for one-to-many based partition is the key factor that influences the performance of DSPSs. Existing instance-oriented data
@@ -36,9 +37,26 @@ experiments to evaluate the performance of Whale.
 
 Developers and contributors should also take a look at our [Developer documentation](DEVELOPER.md).
 
-## Project lead
+## SYSTEM DESIGN AND IMPLEMENTATION
+We implement Whale on top of Apache Storm. We completely rewrite the data communication layer of Apache Storm and add around 500 lines of java code to the Apache Storm version 2.0.0 for
+Whale’s worker-oriented data communication.We make the source code public available (https://github.com/Whale-Storm/whale).
 
-* Nathan Marz ([@nathanmarz](http://twitter.com/nathanmarz))
+More specifically, the process of the one-to-many communication in Whale is described as follows. A source task sends an item to multiple downstream instances. First, the source task serializes
+the generated item and puts it into the hosting worker. Then, the batch component in the hosting worker finds out the destination instances based on the partition strategy and package the serialized
+data item with the identifications of the destination instances hosted on a same worker into a batch tuple. For a generated data item, the
+number of batches is the same as the number of destination workers. Next, the source worker sends the batch to the destination worker. When the destination worker receives the batch, the dispatcher component deserializes the item and obtains the identifications of
+the destination instances. Finally, the dispatcher sends the data item to the destination instances based on the identifications.
+
+<div align="center">
+<img src="https://github.com/Tjcug/storm/images/whale_system_desgin.png" height="23%"  >
+</div>
+
+## Project lead
+* HanHua Chen
+* Fan Zhang
+* Jie Tan ([@tjmaster](https://tjcug.github.io/))
+* Yonghui Wang([@wyh](https://github.com/WYonghui/))
+* HaoPeng Jie([@jhp](https://github.com/jessezax/))
 
 ## Acknowledgements
 
