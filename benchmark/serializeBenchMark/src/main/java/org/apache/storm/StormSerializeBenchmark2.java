@@ -1,7 +1,7 @@
 package org.apache.storm;
 
 import org.apache.storm.model.MyTuple;
-import org.apache.storm.serialization.KryoValuesSerializer;
+import org.apache.storm.serializer.KryoMyTupleClassSerializer;
 import org.apache.storm.tuple.Values;
 import org.apache.storm.utils.Utils;
 
@@ -28,7 +28,7 @@ public class StormSerializeBenchmark2 {
         else if(dataType.equals("nasdaq"))
             tuple=new MyTuple(12,"ack_stream",new Values(NASDAQStockDeal));
 
-        KryoValuesSerializer _kryo=new KryoValuesSerializer(Utils.readDefaultConfig());
+        KryoMyTupleClassSerializer _kryo=new KryoMyTupleClassSerializer(Utils.readDefaultConfig(),MyTuple.class);
         for(int i=0;i<serializeTimes*tuplesNum;i++){
             byte[] bytes = _kryo.serializeObject(tuple);
         }

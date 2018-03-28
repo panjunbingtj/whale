@@ -1,13 +1,12 @@
 package org.apache.storm.model;
 
-import java.io.Serializable;
 import java.util.List;
 
 /**
  * locate org.apache.storm.model
  * Created by mastertj on 2018/3/23.
  */
-public class MyTuple implements Serializable{
+public class MyTuple{
     private final int taskid;
 
     private final String streamId;
