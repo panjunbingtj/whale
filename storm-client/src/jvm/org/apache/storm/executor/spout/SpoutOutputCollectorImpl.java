@@ -112,7 +112,8 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
         /**
          * Storm ACK 源码分析
          * 2.Storm中每条发送出去的消息都会对应一个随机的消息ID,并且这个long类型的消息ID将保存到MessageId这个对象中去。
-         *  MessageId随着TupleImpl发送到下游相应的Bolt中去。
+         *  MessageId随着TupleImpl发送到下游相应的Bolt中去。若系统中含有Acker Bolt, 并且Spout在发送消息时指定了Messageld, Storm将对这条消息进行跟踪，并为其生成一条Rootld，
+         *  然后为发送到每一个Task上面的消息也生成一个消息ID。消息ID是通过调用Messageld的generateld方法来产生的，为一个长整型随机数。
          */
         ////////////////////////////////////优化SpoutOutputCollector/////////////////////////
         MessageId msgId;
@@ -139,7 +140,7 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
 
         /**
          * Storm ACK 源码分析
-         * 1.首先Spout 发送一个锚定(anchored)的消息给Acker Bolt。Acker Bolt将这个tuple的rootId进行保存下来，并且保存
+         * 3.首先Spout 发送一个锚定(anchored) ACKER_INIT_STREAM_ID 的消息给Acker Bolt。Acker Bolt将这个tuple的rootId进行保存下来，并且保存
          *  相应的_outAckVal(ACK值)以及Spout的TaskId。这个ACK值还是当前spout发送这个rootId对应的Tuples的异或值。
          */
         boolean sample = false;
@@ -148,6 +149,10 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
         } catch (Exception ignored) {
         }
         if (needAck) {
+            /**
+             * 将<RootId,元数据〉存储在RotatingMap中。消息元数据中含有Spout的Taskld、Messageld,Streamld以及消息的内容。存储原始的消息内容可以方便以后的失败重传，
+             * ACKER_INIT_STREAM_ID 发送__ack__init流将 ackInitTuple发送给AckerBolt
+             */
             TupleInfo info = new TupleInfo();
             info.setTaskId(this.taskId);
             info.setStream(stream);
@@ -170,6 +175,7 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
             info.setTimestamp(0);
             Long timeDelta = sample ? 0L : null;
             info.setId("0:");
+            //针对Spout发送消息时带有Messageld但系统中并没有Acker Bolt情况的一种特殊处理。此时，Storm将直接调用Spout的Ack方法，系统不对消息进行跟踪。
             executor.ackSpoutMsg(executor, taskData, timeDelta, info);
         }
 
