@@ -23,6 +23,7 @@ import org.apache.storm.messaging.ConnectionWithStatus;
 import org.apache.storm.messaging.IConnectionCallback;
 import org.apache.storm.messaging.WorkerMessage;
 import org.apache.storm.metric.api.IStatefulObject;
+import org.apache.storm.tuple.MessageId;
 import org.apache.storm.utils.ObjectReader;
 import org.apache.storm.utils.StormBoundedExponentialBackoffRetry;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -259,7 +260,9 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
 
     @Override
     public void send(int taskId, byte[] payload) {
-        WorkerMessage workerMessage=new WorkerMessage(Arrays.asList(taskId),payload);
+        List<MessageId> messageIds=new ArrayList<>();
+        messageIds.add(MessageId.makeUnanchored());
+        WorkerMessage workerMessage=new WorkerMessage(Arrays.asList(taskId),messageIds,payload);
         send(workerMessage);
     }
 

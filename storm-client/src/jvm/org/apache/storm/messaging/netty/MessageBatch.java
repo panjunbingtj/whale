@@ -18,12 +18,14 @@
 package org.apache.storm.messaging.netty;
 
 import org.apache.storm.messaging.WorkerMessage;
+import org.apache.storm.tuple.MessageId;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 ////////////////////////////////////优化transferAllGrouping/////////////////////////
 class MessageBatch {
@@ -100,6 +102,8 @@ class MessageBatch {
      * Each WorkerMessage is encoded as:
      *  tasks_size short(2)
      *  tasks_id ... List<short>(2)
+     *  _messageId_size short(2)
+     *  _messageIds... List<MessageId>
      *  len ... int(4)
      *  payload ... byte[]     *  
      */
@@ -116,9 +120,24 @@ class MessageBatch {
 
             bout.writeShort((short)task_id);
         }
+
+        List<MessageId> messageIdList = message.getMessageIdList();
+        bout.writeShort((short)messageIdList.size());
+        for(int i=0;i<messageIdList.size();i++){
+            writeMessageId(bout,messageIdList.get(i));
+        }
+
         bout.writeInt(payload_len);
         if (payload_len >0)
             bout.write(message.message());
     }
 
+    private void writeMessageId(ChannelBufferOutputStream bout, MessageId messageId) throws Exception {
+        bout.writeShort((short)messageId.getAnchorsToIds().size());
+        for(Map.Entry<Long, Long> anchorToId: messageId.getAnchorsToIds().entrySet()) {
+            bout.writeLong(anchorToId.getKey());
+            bout.writeLong(anchorToId.getValue());
+        }
+    }
 }
+

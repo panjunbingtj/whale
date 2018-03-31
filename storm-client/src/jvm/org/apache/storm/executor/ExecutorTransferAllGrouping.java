@@ -22,6 +22,7 @@ import com.lmax.disruptor.EventHandler;
 import org.apache.storm.Config;
 import org.apache.storm.daemon.worker.WorkerState;
 import org.apache.storm.serialization.KryoTupleSerializer;
+import org.apache.storm.tuple.MessageId;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.utils.DisruptorQueue;
 import org.apache.storm.utils.MutableObject;
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.Callable;
 
 /**
@@ -58,8 +60,8 @@ public class ExecutorTransferAllGrouping implements EventHandler, Callable {
 
     //4.ExecutorTransfer将tuple添加目标task信息，将tuple封装成AddressedTuple。并将封装后的结果AddressedTuple publish到batchTransferQueue队列中。
     // batchTransferQueue也就是Executor的发送队列。
-    public void transferBatchTuple(List<Integer> outTasks, Tuple tuple) {
-        BatchTuple val = new BatchTuple(outTasks, tuple);
+    public void transferBatchTuple(List<Integer> outTasks, Tuple tuple, Queue<MessageId> messageIdQueue) {
+        BatchTuple val = new BatchTuple(outTasks, tuple,messageIdQueue);
         if (isDebug) {
             LOG.info("transferBatchTuple BatchTuple : {}",val);
             LOG.info("TRANSFERRING tuple {}", val);

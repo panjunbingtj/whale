@@ -1,8 +1,12 @@
 package org.apache.storm.messaging;
 
+import org.apache.storm.tuple.MessageId;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * locate org.apache.storm.messaging
@@ -11,11 +15,17 @@ import java.util.List;
  */
 public class WorkerMessage {
     private List<Integer> _taskIds;
+    private List<MessageId> _messageIdList;
     private byte[] _message;
 
-    public WorkerMessage(List<Integer> _taskIds, byte[] _message) {
+    public WorkerMessage(List<Integer> _taskIds,  List<MessageId> _messageIdList, byte[] _message) {
         this._taskIds = _taskIds;
+        this._messageIdList=_messageIdList;
         this._message = _message;
+    }
+
+    public List<MessageId> getMessageIdList() {
+        return _messageIdList;
     }
 
     public List<Integer> tasks() {
@@ -32,22 +42,52 @@ public class WorkerMessage {
         for(int _task : _taskIds){
             bb.putShort((short)_task);
         }
+        bb.putShort((short)_messageIdList.size());
+        for(MessageId _msgId : _messageIdList){
+            bb.putShort((short)_msgId.getAnchorsToIds().size());
+            for(Map.Entry<Long, Long> anchorToId: _msgId.getAnchorsToIds().entrySet()) {
+                bb.putLong(anchorToId.getKey());
+                bb.putLong(anchorToId.getValue());
+            }
+        }
         bb.put(_message);
         return bb;
     }
 
     public void deserialize(ByteBuffer packet) {
         if (packet==null) return;
-        int size=packet.getShort();
-        for(int i=0;i<size;i++){
+        int totalsize=0;
+        int taskidsize=packet.getShort();
+        for(int i=0;i<taskidsize;i++){
             _taskIds.add((int) packet.getShort());
         }
-        _message = new byte[packet.limit()-2*size];
+        int messageidsize=packet.getShort();
+        for(int i=0;i<messageidsize;i++){
+            MessageId messageId;
+            HashMap<Long,Long> AnchorsToIds=new HashMap<>();
+            int AnchorsToIdsSize=packet.getShort();
+            for(int j=0;j<AnchorsToIdsSize;j++){
+                long key = packet.getLong();
+                long value = packet.getLong();
+                AnchorsToIds.put(key,value);
+            }
+            messageId=MessageId.makeId(AnchorsToIds);
+            _messageIdList.add(messageId);
+            totalsize+=(AnchorsToIdsSize*8+2);
+        }
+        totalsize+=(2+2+2*taskidsize);
+        _message = new byte[packet.limit()-totalsize];
         packet.get(_message);
     }
 
     public int getEncodeLength(){
-        return 2+_message.length+2*_taskIds.size();
+        int total=0;
+        total=2 + 2 + _message.length + 2*_taskIds.size();
+        for(MessageId messageId:_messageIdList){
+            int AnchorsToIdsSize = messageId.getAnchorsToIds().size();
+            total+=(2+16*AnchorsToIdsSize);
+        }
+        return total;
     }
 
     @Override

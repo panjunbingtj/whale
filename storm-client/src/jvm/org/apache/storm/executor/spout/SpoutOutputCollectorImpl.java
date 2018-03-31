@@ -31,9 +31,7 @@ import org.apache.storm.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
 
@@ -116,17 +114,21 @@ public class SpoutOutputCollectorImpl implements ISpoutOutputCollector {
          *  然后为发送到每一个Task上面的消息也生成一个消息ID。消息ID是通过调用Messageld的generateld方法来产生的，为一个长整型随机数。
          */
         ////////////////////////////////////优化SpoutOutputCollector/////////////////////////
-        MessageId msgId;
-        if (needAck) {
-            long as = MessageId.generateId(random);
-            msgId = MessageId.makeRootId(rootId, as);
-            ackSeq.add(as);
-        } else {
-            msgId = MessageId.makeUnanchored();
+        Queue<MessageId> messageIdQueue=new ArrayDeque<>();
+        for(Integer taskid:outTasks){
+            MessageId msgId;
+            if (needAck) {
+                long as = MessageId.generateId(random);
+                msgId = MessageId.makeRootId(rootId, as);
+                ackSeq.add(as);
+            } else {
+                msgId = MessageId.makeUnanchored();
+            }
+            messageIdQueue.add(msgId);
         }
 
-        TupleImpl tuple = new TupleImpl(executor.getWorkerTopologyContext(), values, this.taskId, stream, msgId);
-        executor.getExecutorTransferAllGrouping().transferBatchTuple(outTasks,tuple);
+        TupleImpl tuple = new TupleImpl(executor.getWorkerTopologyContext(), values, this.taskId, stream, MessageId.makeUnanchored());
+        executor.getExecutorTransferAllGrouping().transferBatchTuple(outTasks,tuple,messageIdQueue);
         ////////////////////////////////////优化SpoutOutputCollector/////////////////////////
 
         if(isDebug){

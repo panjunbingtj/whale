@@ -82,22 +82,27 @@ public class BoltOutputCollectorImpl implements IOutputCollector {
          */
 
         ////////////////////////////////////优化BoltOutputCollector/////////////////////////
-        Map<Long, Long> anchorsToIds = new HashMap<>();
-        if (anchors != null) {
-            for (Tuple a : anchors) {
-                Set<Long> rootIds = a.getMessageId().getAnchorsToIds().keySet();
-                if (rootIds.size() > 0) {
-                    long edgeId = MessageId.generateId(random);
-                    ((TupleImpl) a).updateAckVal(edgeId);
-                    for (Long root_id : rootIds) {
-                        putXor(anchorsToIds, root_id, edgeId);
+        Queue<MessageId> messageIdQueue=new ArrayDeque<>();
+        for(Integer taskid :outTasks){
+            Map<Long, Long> anchorsToIds = new HashMap<>();
+            if (anchors != null) {
+                for (Tuple a : anchors) {
+                    Set<Long> rootIds = a.getMessageId().getAnchorsToIds().keySet();
+                    if (rootIds.size() > 0) {
+                        long edgeId = MessageId.generateId(random);
+                        ((TupleImpl) a).updateAckVal(edgeId);
+                        for (Long root_id : rootIds) {
+                            putXor(anchorsToIds, root_id, edgeId);
+                        }
                     }
                 }
             }
+            MessageId msgId = MessageId.makeId(anchorsToIds);
+            messageIdQueue.add(msgId);
         }
-        MessageId msgId = MessageId.makeId(anchorsToIds);
-        TupleImpl tupleExt = new TupleImpl(executor.getWorkerTopologyContext(), values, taskId, streamId, msgId);
-        executor.getExecutorTransferAllGrouping().transferBatchTuple(outTasks,tupleExt);
+
+        TupleImpl tupleExt = new TupleImpl(executor.getWorkerTopologyContext(), values, taskId, streamId, MessageId.makeUnanchored());
+        executor.getExecutorTransferAllGrouping().transferBatchTuple(outTasks,tupleExt,messageIdQueue);
         ////////////////////////////////////优化BoltOutputCollector/////////////////////////
 
         if (isEventLoggers) {

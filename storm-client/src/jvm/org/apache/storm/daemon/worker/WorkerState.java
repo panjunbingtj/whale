@@ -37,9 +37,7 @@ import org.apache.storm.hooks.BaseWorkerHook;
 import org.apache.storm.messaging.*;
 import org.apache.storm.serialization.KryoTupleSerializer;
 import org.apache.storm.task.WorkerTopologyContext;
-import org.apache.storm.tuple.AddressedTuple;
-import org.apache.storm.tuple.Fields;
-import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.*;
 import org.apache.storm.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +60,7 @@ public class WorkerState {
 
     final Map<String, Object> conf;
     final IContext mqContext;
+    private boolean isDebug;
 
     public Map getConf() {
         return conf;
@@ -324,6 +323,7 @@ public class WorkerState {
         this.groupingTransferDrainer=new AllGroupingTransferDrainer();
         //PropertiesUtil.init("/storm-client-version-info.properties");
         //delay=Long.valueOf(PropertiesUtil.getProperties("serializationtime"));
+        this.isDebug = ObjectReader.getBoolean(conf.get(Config.TOPOLOGY_DEBUG), false);
     }
 
     public void refreshConnections() {
@@ -553,8 +553,12 @@ public class WorkerState {
     ////////////////////////////////////优化transferAllGrouping/////////////////////////
     public void transferAllGrouping(KryoTupleSerializer serializer, List<BatchTuple> batchTuples) {
         for(BatchTuple batchTuple:batchTuples){
-            LOG.debug("the time of start serializing : {}", System.currentTimeMillis());
-            LOG.debug("transferAllGrouping batchTuple :{}",batchTuple);
+            if(isDebug){
+                LOG.info("the time of start serializing : {}", System.currentTimeMillis());
+                LOG.info("" +
+                        "" +
+                        " batchTuple :{}",batchTuple);
+            }
             List<AddressedTuple> local = new ArrayList<>();
             Map<NodeInfo, WorkerMessage> remoteMap = new HashMap<>();
             Map<Integer, NodeInfo> integerNodeInfoMap = cachedTaskToNodePort.get();
@@ -571,19 +575,25 @@ public class WorkerState {
             for(Integer destTask:outTasks){
                 if(taskIds.contains(destTask)){
                     // Local task
-                    local.add(new AddressedTuple(destTask,tuple));
+                    MessageId poll = batchTuple.getMessageIdQueue().poll();
+                    TupleImpl tupleimpl=new TupleImpl(tuple);
+                    tupleimpl.setMessageId(poll);
+                    local.add(new AddressedTuple(destTask,tupleimpl));
                 }else {
                     // Using java objects directly to avoid performance issues in java code Arrays.asList(new WorkerMessage(Arrays.asList(destTask),serializeByte))
                     NodeInfo nodeInfo = integerNodeInfoMap.get(destTask);
                     if (!remoteMap.containsKey(nodeInfo)) {
-                        remoteMap.put(nodeInfo, new WorkerMessage(new ArrayList<>(),serializeByte));
+                        remoteMap.put(nodeInfo, new WorkerMessage(new ArrayList<>(),new ArrayList<MessageId>(),serializeByte));
                     }
                     remoteMap.get(nodeInfo).tasks().add(destTask);
+                    //为WorkerMessage添加tMessageId
+                    remoteMap.get(nodeInfo).getMessageIdList().add(batchTuple.getMessageIdQueue().poll());
                 }
             }
-
-            LOG.debug("the time of end serializing : {}", System.currentTimeMillis());
-            LOG.debug("transferAllGrouping remoteMap : {}",remoteMap);
+            if(isDebug){
+                LOG.info("the time of end serializing : {}", System.currentTimeMillis());
+                LOG.info("transferAllGrouping remoteMap : {}",remoteMap);
+            }
             if (!local.isEmpty()) {
                 transferLocal(local);
             }

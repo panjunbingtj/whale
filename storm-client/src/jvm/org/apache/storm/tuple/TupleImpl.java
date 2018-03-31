@@ -17,22 +17,22 @@
  */
 package org.apache.storm.tuple;
 
-import java.util.Collections;
-import java.util.List;
 
 import org.apache.storm.generated.GlobalStreamId;
 import org.apache.storm.task.GeneralTopologyContext;
+import java.util.Collections;
+import java.util.List;
 
 public class TupleImpl implements Tuple {
     private final List<Object> values;
     private final int taskId;
     private final String streamId;
     private final GeneralTopologyContext context;
-    private final MessageId id;
+    private MessageId id;
     private Long _processSampleStartTime;
     private Long _executeSampleStartTime;
     private long _outAckVal = 0;
-    
+
     public TupleImpl(Tuple t) {
         this.values = t.getValues();
         this.taskId = t.getSourceTask();
@@ -47,13 +47,17 @@ public class TupleImpl implements Tuple {
         }
     }
 
+    public void setMessageId(MessageId id) {
+        this.id = id;
+    }
+
     public TupleImpl(GeneralTopologyContext context, List<Object> values, int taskId, String streamId, MessageId id) {
         this.values = Collections.unmodifiableList(values);
         this.taskId = taskId;
         this.streamId = streamId;
         this.id = id;
         this.context = context;
-        
+
         String componentId = context.getComponentId(taskId);
         Fields schema = context.getComponentOutputFields(componentId, streamId);
         if(values.size()!=schema.size()) {
@@ -91,7 +95,7 @@ public class TupleImpl implements Tuple {
     public long getAckVal() {
         return _outAckVal;
     }
-    
+
     /** Tuple APIs*/
     @Override
     public int size() {

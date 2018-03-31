@@ -18,12 +18,14 @@
 package org.apache.storm.messaging.netty;
 
 import org.apache.storm.messaging.WorkerMessage;
+import org.apache.storm.tuple.MessageId;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 ////////////////////////////////////优化transferAllGrouping/////////////////////////
@@ -34,6 +36,8 @@ public class MessageDecoder extends FrameDecoder {
      * Each WorkerMessage is encoded as:
      *  tasks_size short(2)
      *  tasks_id ... List<short>(2)
+     *  _messageId_size short(2)
+     *  _messageIds... List<MessageId>
      *  len ... int(4)
      *  payload ... byte[]    *
      */
@@ -101,10 +105,11 @@ public class MessageDecoder extends FrameDecoder {
                 return new SaslMessageToken(payload.array());
             }
 
-            // case 3: Worker Message
+            //TODO ACK
+            // case 3: WorkerMessage
 
             // Make sure that we have received at least an integer (length)
-            if (available < 4+2*code) {
+            if (available < 2*code+4) {
                 // need more data
                 buf.resetReaderIndex();
                 break;
@@ -116,13 +121,48 @@ public class MessageDecoder extends FrameDecoder {
                 task_ids.add((int)buf.readShort());
             }
 
+            // Read the _messageIdList field
+            List<MessageId> _messageIdList=new ArrayList<>();
+            int messageidsize = buf.readShort();
+
+            available -= (2*code+2);
+            for(int i=0;i<messageidsize;i++){
+                if (available < 2) {
+                    // need more data
+                    buf.resetReaderIndex();
+                    break;
+                }
+                MessageId messageId;
+                HashMap<Long,Long> AnchorsToIds=new HashMap<>();
+                int AnchorsToIdsSize=buf.readShort();
+                available -=2;
+
+                if (available < 16*AnchorsToIdsSize) {
+                    // need more data
+                    buf.resetReaderIndex();
+                    break;
+                }
+                for(int j=0;j<AnchorsToIdsSize;j++){
+                    long key = buf.readLong();
+                    long value = buf.readLong();
+                    AnchorsToIds.put(key,value);
+                }
+                messageId=MessageId.makeId(AnchorsToIds);
+                _messageIdList.add(messageId);
+                available -= 16*AnchorsToIdsSize;
+            }
+
+            if (available < 4) {
+                // need more data
+                buf.resetReaderIndex();
+                break;
+            }
             // Read the length field.
             int length = buf.readInt();
 
-            available -= (4+2*code);
-
+            available -= 4;
             if (length <= 0) {
-                ret.add(new WorkerMessage(task_ids, null));
+                ret.add(new WorkerMessage(task_ids, null, null));
                 break;
             }
 
@@ -140,7 +180,7 @@ public class MessageDecoder extends FrameDecoder {
 
             // Successfully decoded a frame.
             // Return a TaskMessage object
-            ret.add(new WorkerMessage(task_ids, payload.array()));
+            ret.add(new WorkerMessage(task_ids, _messageIdList, payload.array()));
         }
 
         if (ret.size() == 0) {

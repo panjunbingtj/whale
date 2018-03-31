@@ -1,8 +1,10 @@
 package org.apache.storm.executor;
 
+import org.apache.storm.tuple.MessageId;
 import org.apache.storm.tuple.Tuple;
 
 import java.util.List;
+import java.util.Queue;
 
 /**
  * locate org.apache.storm.executor
@@ -11,10 +13,19 @@ import java.util.List;
 public class BatchTuple {
     private List<Integer> outTasks;
     private Tuple tuple;
-
-    public BatchTuple(List<Integer> outTasks, Tuple tuple) {
+    private Queue<MessageId> messageIdQueue;
+    public BatchTuple(List<Integer> outTasks, Tuple tuple, Queue<MessageId> messageIdQueue) {
         this.outTasks = outTasks;
         this.tuple = tuple;
+        this.messageIdQueue=messageIdQueue;
+    }
+
+    public Queue<MessageId> getMessageIdQueue() {
+        return messageIdQueue;
+    }
+
+    public void setMessageIdQueue(Queue<MessageId> messageIdQueue) {
+        this.messageIdQueue = messageIdQueue;
     }
 
     public List<Integer> getOutTasks() {

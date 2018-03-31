@@ -329,10 +329,16 @@ public abstract class Executor implements Callable, EventHandler<Object> {
         }
     }
 
+
     public void sendUnanchored(Task task, String stream, List<Object> values, ExecutorTransferAllGrouping transfer) {
+        //TODO Debug
         Tuple tuple = task.getTuple(stream, values);
         List<Integer> tasks = task.getOutgoingTasks(stream, values);
-        transfer.transferBatchTuple(tasks,tuple);
+        ArrayDeque<MessageId> messageIdDeque = new ArrayDeque<>();
+        for(Integer taskid : tasks){
+            messageIdDeque.add(MessageId.makeUnanchored());
+        }
+        transfer.transferBatchTuple(tasks,tuple,messageIdDeque);
     }
 
     /**

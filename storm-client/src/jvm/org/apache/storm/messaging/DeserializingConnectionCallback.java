@@ -23,7 +23,9 @@ import org.apache.storm.metric.api.IMetric;
 import org.apache.storm.serialization.KryoTupleDeserializer;
 import org.apache.storm.task.GeneralTopologyContext;
 import org.apache.storm.tuple.AddressedTuple;
+import org.apache.storm.tuple.MessageId;
 import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.TupleImpl;
 import org.apache.storm.utils.ObjectReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,10 +79,13 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
         for(WorkerMessage workerMessage : batch){
             ArrayList<AddressedTuple> ret = new ArrayList<>();
             LOG.debug("the time of start deserializing : {}", System.currentTimeMillis());
-            Tuple tuple = des.deserialize(workerMessage.message());
             //TimeUtils.waitForTimeMills(delay);
-            for(Integer taskid : workerMessage.tasks()){
-                AddressedTuple addrTuple = new AddressedTuple(taskid, tuple);
+            Tuple tuple = des.deserialize(workerMessage.message());
+            for(int i=0;i < workerMessage.tasks().size();i++){
+                TupleImpl tupleImpl=new TupleImpl(tuple);
+                MessageId messageId = workerMessage.getMessageIdList().get(i);
+                tupleImpl.setMessageId(messageId);
+                AddressedTuple addrTuple = new AddressedTuple(workerMessage.tasks().get(i), tupleImpl);
                 ret.add(addrTuple);
             }
             updateMetrics(tuple.getSourceTask(), workerMessage);

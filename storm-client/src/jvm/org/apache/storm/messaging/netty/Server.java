@@ -175,7 +175,7 @@ class  Server extends ConnectionWithStatus implements IStatefulObject, ISaslServ
     public void sendLoadMetrics(Map<Integer, Double> taskToLoad) {
         try {
             MessageBatch mb = new MessageBatch(1);
-            mb.add(new WorkerMessage(Arrays.asList(-1), _ser.serialize(Arrays.asList((Object)taskToLoad))));
+            mb.add(new WorkerMessage(Arrays.asList(-1), new ArrayList<>(),_ser.serialize(Arrays.asList((Object)taskToLoad))));
             allChannels.write(mb);
         } catch (IOException e) {
             throw new RuntimeException(e);

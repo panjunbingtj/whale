@@ -25,7 +25,6 @@ import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.topology.base.BaseBasicBolt;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
-import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +34,7 @@ import java.util.Map;
 /**
  * This topology demonstrates Storm's stream groupings and multilang
  * capabilities.
- * storm jar storm-starter-2.0.0-SNAPSHOT.jar org.apache.storm.starter.WordCountTopology wordcountTopology
+ * storm jar storm-starter-2.0.0-SNAPSHOT.jar org.apache.storm.starter.WordCountTopology wordcountTopology 4 4
  */
 public class WordCountTopology extends ConfigurableTopology {
   public static class SplitSentence extends BaseBasicBolt {
@@ -80,7 +79,7 @@ public class WordCountTopology extends ConfigurableTopology {
       count++;
       counts.put(word, count);
       LOG.info("word :{}, count :{}",word,count);
-      collector.emit(new Values(word, count));
+      //collector.emit(new Values(word, count));
     }
 
     @Override
@@ -97,17 +96,19 @@ public class WordCountTopology extends ConfigurableTopology {
 
     TopologyBuilder builder = new TopologyBuilder();
 
+    Integer workersNum=Integer.valueOf(args[1]);
+    Integer splitsNum=Integer.valueOf(args[2]);
     builder.setSpout("spout", new RandomSentenceSpout(), 1);
 
-    builder.setBolt("split", new SplitSentence(), 9).allGrouping("spout");
+    builder.setBolt("split", new SplitSentence(), splitsNum).allGrouping("spout");
     //builder.setBolt("split", new SplitSentenceForCountBolt(), 3).allGrouping("spout");
     //builder.setBolt("count", new WordCount(), 12).fieldsGrouping("split", new Fields("word"));
 
-    //conf.setDebug(true);
+    conf.setDebug(true);
 
     String topologyName = "word-count";
 
-    conf.setNumWorkers(4);
+    conf.setNumWorkers(workersNum);
 
     if (args != null && args.length > 0) {
       topologyName = args[0];

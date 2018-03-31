@@ -69,11 +69,11 @@ public class AllGroupingTestTopology extends ConfigurableTopology{
     public static class FirstBolt extends BaseBasicBolt {
         private static final Logger LOG = LoggerFactory.getLogger(FirstBolt.class);
 
-        @Override
-        public void execute(Tuple input, BasicOutputCollector collector) {
-            String word = input.getStringByField("word");
-            LOG.info("the time of emitting tuple : {} {}", word, System.currentTimeMillis());
-            collector.emit(new Values("first "+word));
+            @Override
+            public void execute(Tuple input, BasicOutputCollector collector) {
+                String word = input.getStringByField("word");
+                LOG.info("the time of emitting tuple : {} {}", word, System.currentTimeMillis());
+                collector.emit(new Values("first "+word));
         }
 
         @Override
