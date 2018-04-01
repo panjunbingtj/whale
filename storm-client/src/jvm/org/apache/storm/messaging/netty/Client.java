@@ -23,9 +23,11 @@ import org.apache.storm.messaging.ConnectionWithStatus;
 import org.apache.storm.messaging.IConnectionCallback;
 import org.apache.storm.messaging.WorkerMessage;
 import org.apache.storm.metric.api.IStatefulObject;
+import org.apache.storm.serialization.KryoWorkerMessageSerializer;
 import org.apache.storm.tuple.MessageId;
 import org.apache.storm.utils.ObjectReader;
 import org.apache.storm.utils.StormBoundedExponentialBackoffRetry;
+import org.apache.storm.utils.Utils;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFactory;
@@ -134,12 +136,16 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
 
     private final Object writeLock = new Object();
 
+    private final KryoWorkerMessageSerializer serializer;
+
     @SuppressWarnings("rawtypes")
     Client(Map<String, Object> topoConf, ChannelFactory factory, HashedWheelTimer scheduler, String host, int port, Context context) {
         this.topoConf = topoConf;
         closing = false;
         this.scheduler = scheduler;
         this.context = context;
+        this.serializer=new KryoWorkerMessageSerializer(Utils.readDefaultConfig());
+
         int bufferSize = ObjectReader.getInt(topoConf.get(Config.STORM_MESSAGING_NETTY_BUFFER_SIZE));
         // if SASL authentication is disabled, saslChannelReady is initialized as true; otherwise false
         saslChannelReady.set(!ObjectReader.getBoolean(topoConf.get(Config.STORM_MESSAGING_NETTY_AUTHENTICATION), false));
@@ -158,7 +164,8 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
         dstAddressPrefixedName = prefixedName(dstAddress);
         launchChannelAliveThread();
         scheduleConnect(NO_DELAY_MS);
-        batcher = new MessageBuffer(messageBatchSize);
+        batcher = new MessageBuffer(messageBatchSize,serializer);
+
     }
 
     /**

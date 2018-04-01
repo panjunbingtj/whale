@@ -26,7 +26,10 @@ import org.apache.storm.messaging.WorkerMessage;
 import org.apache.storm.metric.api.IMetric;
 import org.apache.storm.metric.api.IStatefulObject;
 import org.apache.storm.serialization.KryoValuesSerializer;
+import org.apache.storm.serialization.KryoWorkerMessageSerializer;
+import org.apache.storm.tuple.MessageId;
 import org.apache.storm.utils.ObjectReader;
+import org.apache.storm.utils.Utils;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFactory;
@@ -62,9 +65,12 @@ class  Server extends ConnectionWithStatus implements IStatefulObject, ISaslServ
     private KryoValuesSerializer _ser;
     private IConnectionCallback _cb = null; 
     private final int boundPort;
-    
+
+    private final KryoWorkerMessageSerializer serializer;
+
     @SuppressWarnings("rawtypes")
     Server(Map<String, Object> topoConf, int port) {
+        this.serializer=new KryoWorkerMessageSerializer(Utils.readDefaultConfig());
         this.topoConf = topoConf;
         this.port = port;
         _ser = new KryoValuesSerializer(topoConf);
@@ -174,8 +180,10 @@ class  Server extends ConnectionWithStatus implements IStatefulObject, ISaslServ
     @Override
     public void sendLoadMetrics(Map<Integer, Double> taskToLoad) {
         try {
-            MessageBatch mb = new MessageBatch(1);
-            mb.add(new WorkerMessage(Arrays.asList(-1), new ArrayList<>(),_ser.serialize(Arrays.asList((Object)taskToLoad))));
+            MessageBatch mb = new MessageBatch(1,serializer);
+            List<MessageId> messageIdList=new ArrayList<>();
+            messageIdList.add(MessageId.makeUnanchored());
+            mb.add(new WorkerMessage(Arrays.asList(-1), messageIdList ,_ser.serialize(Arrays.asList((Object)taskToLoad))));
             allChannels.write(mb);
         } catch (IOException e) {
             throw new RuntimeException(e);

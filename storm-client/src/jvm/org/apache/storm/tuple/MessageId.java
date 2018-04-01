@@ -19,6 +19,9 @@ package org.apache.storm.tuple;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +30,8 @@ import java.util.Random;
 import java.util.Set;
 
 public class MessageId {
+    private static final Logger LOG = LoggerFactory.getLogger(MessageId.class);
+
     private Map<Long, Long> _anchorsToIds;
     
     public static long generateId(Random rand) {
@@ -77,8 +82,8 @@ public class MessageId {
     public void serialize(Output out) throws IOException {
         out.writeInt(_anchorsToIds.size(), true);
         for(Entry<Long, Long> anchorToId: _anchorsToIds.entrySet()) {
-            out.writeLong(anchorToId.getKey());
-            out.writeLong(anchorToId.getValue());
+            out.writeLong(anchorToId.getKey(),true);
+            out.writeLong(anchorToId.getValue(),true);
         }
     }
 
@@ -86,7 +91,9 @@ public class MessageId {
         int numAnchors = in.readInt(true);
         Map<Long, Long> anchorsToIds = new HashMap<>();
         for(int i=0; i<numAnchors; i++) {
-            anchorsToIds.put(in.readLong(), in.readLong());
+            long key = in.readLong(true);
+            long value = in.readLong(true);
+            anchorsToIds.put(key,value);
         }
         return new MessageId(anchorsToIds);
     }

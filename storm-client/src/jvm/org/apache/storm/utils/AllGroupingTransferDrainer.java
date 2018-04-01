@@ -36,13 +36,13 @@ public class AllGroupingTransferDrainer {
 
   private Map<NodeInfo, ArrayList<WorkerMessage>> bundles = new HashMap();
   private static final Logger LOG = LoggerFactory.getLogger(AllGroupingTransferDrainer.class);
-  
+
   public void add(HashMap<NodeInfo, WorkerMessage> taskTupleSetMap) {
     for (Map.Entry<NodeInfo, WorkerMessage> entry : taskTupleSetMap.entrySet()) {
       addListRefToMap(this.bundles, entry.getKey(), entry.getValue());
     }
   }
-  
+
   public void send(Map<NodeInfo, IConnection> connections) {
 
     for (Map.Entry<NodeInfo, ArrayList<WorkerMessage>> entry : bundles.entrySet()) {

@@ -17,19 +17,20 @@
  */
 package org.apache.storm.messaging.netty;
 
-import org.apache.storm.messaging.WorkerMessage;
-import org.apache.storm.tuple.MessageId;
+import org.apache.storm.serialization.KryoWorkerMessageDeserializer;
+import org.apache.storm.utils.Utils;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 ////////////////////////////////////优化transferAllGrouping/////////////////////////
-public class MessageDecoder extends FrameDecoder {    
+public class MessageDecoder extends FrameDecoder {
+    KryoWorkerMessageDeserializer deserializer=new KryoWorkerMessageDeserializer(Utils.readDefaultConfig());
+
     /*
      * Each ControlMessage is encoded as:
      *  code (<0) ... short(2)
@@ -74,32 +75,32 @@ public class MessageDecoder extends FrameDecoder {
                     return ctrl_msg;
                 }
             }
-            
+
             //case 2: SaslTokenMessageRequest
-            if(code == SaslMessageToken.IDENTIFIER) {
-            	// Make sure that we have received at least an integer (length) 
+            if (code == SaslMessageToken.IDENTIFIER) {
+                // Make sure that we have received at least an integer (length)
                 if (buf.readableBytes() < 4) {
                     //need more data
                     buf.resetReaderIndex();
                     return null;
                 }
-                
+
                 // Read the length field.
                 int length = buf.readInt();
-                if (length<=0) {
+                if (length <= 0) {
                     return new SaslMessageToken(null);
                 }
-                
+
                 // Make sure if there's enough bytes in the buffer.
                 if (buf.readableBytes() < length) {
                     // The whole bytes were not received yet - return null.
                     buf.resetReaderIndex();
                     return null;
                 }
-                
+
                 // There's enough bytes in the buffer. Read it.  
                 ChannelBuffer payload = buf.readBytes(length);
-                
+
                 // Successfully decoded a frame.
                 // Return a SaslTokenMessageRequest object
                 return new SaslMessageToken(payload.array());
@@ -108,79 +109,33 @@ public class MessageDecoder extends FrameDecoder {
             //TODO ACK
             // case 3: WorkerMessage
 
-            // Make sure that we have received at least an integer (length)
-            if (available < 2*code+4) {
-                // need more data
-                buf.resetReaderIndex();
-                break;
-            }
-
-            // Read the tasks_id field
-            List<Integer> task_ids=new ArrayList<>();
-            for(int i=0;i<code;i++){
-                task_ids.add((int)buf.readShort());
-            }
-
-            // Read the _messageIdList field
-            List<MessageId> _messageIdList=new ArrayList<>();
-            int messageidsize = buf.readShort();
-
-            available -= (2*code+2);
-            for(int i=0;i<messageidsize;i++){
-                if (available < 2) {
-                    // need more data
+            if (code == -800) {
+                // Make sure that we have received at least an integer (length)
+                if (buf.readableBytes() < 4) {
+                    //need more data
                     buf.resetReaderIndex();
                     break;
                 }
-                MessageId messageId;
-                HashMap<Long,Long> AnchorsToIds=new HashMap<>();
-                int AnchorsToIdsSize=buf.readShort();
-                available -=2;
+                // Read the length field.
+                int length = buf.readInt();
+                available -= 4;
 
-                if (available < 16*AnchorsToIdsSize) {
-                    // need more data
+                // Make sure if there's enough bytes in the buffer.
+                if (available < length) {
+                    // The whole bytes were not received yet - return null.
                     buf.resetReaderIndex();
                     break;
                 }
-                for(int j=0;j<AnchorsToIdsSize;j++){
-                    long key = buf.readLong();
-                    long value = buf.readLong();
-                    AnchorsToIds.put(key,value);
-                }
-                messageId=MessageId.makeId(AnchorsToIds);
-                _messageIdList.add(messageId);
-                available -= 16*AnchorsToIdsSize;
+                available -= length;
+
+                // There's enough bytes in the buffer. Read it.
+                ChannelBuffer payload = buf.readBytes(length);
+
+                // Successfully decoded a frame.
+                // Return a TaskMessage object
+                ret.add(deserializer.deserialize(payload.array()));
+
             }
-
-            if (available < 4) {
-                // need more data
-                buf.resetReaderIndex();
-                break;
-            }
-            // Read the length field.
-            int length = buf.readInt();
-
-            available -= 4;
-            if (length <= 0) {
-                ret.add(new WorkerMessage(task_ids, null, null));
-                break;
-            }
-
-            // Make sure if there's enough bytes in the buffer.
-            if (available < length) {
-                // The whole bytes were not received yet - return null.
-                buf.resetReaderIndex();
-                break;
-            }
-            available -= length;
-
-            // There's enough bytes in the buffer. Read it.
-            ChannelBuffer payload = buf.readBytes(length);
-
-
-            // Successfully decoded a frame.
-            // Return a TaskMessage object
-            ret.add(new WorkerMessage(task_ids, _messageIdList, payload.array()));
         }
 
         if (ret.size() == 0) {

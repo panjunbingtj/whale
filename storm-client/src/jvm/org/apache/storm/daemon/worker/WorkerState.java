@@ -253,14 +253,14 @@ public class WorkerState {
     private long delay=0;
 
     public WorkerState(Map<String, Object> conf, IContext mqContext, String topologyId, String assignmentId, int port, String workerId,
-        Map<String, Object> topologyConf, IStateStorage stateStorage, IStormClusterState stormClusterState)
-        throws IOException, InvalidTopologyException {
+                       Map<String, Object> topologyConf, IStateStorage stateStorage, IStormClusterState stormClusterState)
+            throws IOException, InvalidTopologyException {
         this.executors = new HashSet<>(readWorkerExecutors(stormClusterState, topologyId, assignmentId, port));
         this.transferQueue = new DisruptorQueue("worker-transfer-queue",
-            ObjectReader.getInt(topologyConf.get(Config.TOPOLOGY_TRANSFER_BUFFER_SIZE)),
-            (long) topologyConf.get(Config.TOPOLOGY_DISRUPTOR_WAIT_TIMEOUT_MILLIS),
-            ObjectReader.getInt(topologyConf.get(Config.TOPOLOGY_DISRUPTOR_BATCH_SIZE)),
-            (long) topologyConf.get(Config.TOPOLOGY_DISRUPTOR_BATCH_TIMEOUT_MILLIS));
+                ObjectReader.getInt(topologyConf.get(Config.TOPOLOGY_TRANSFER_BUFFER_SIZE)),
+                (long) topologyConf.get(Config.TOPOLOGY_DISRUPTOR_WAIT_TIMEOUT_MILLIS),
+                ObjectReader.getInt(topologyConf.get(Config.TOPOLOGY_DISRUPTOR_BATCH_SIZE)),
+                (long) topologyConf.get(Config.TOPOLOGY_DISRUPTOR_BATCH_TIMEOUT_MILLIS));
 
         this.conf = conf;
         this.mqContext = (null != mqContext) ? mqContext : TransportFactory.makeContext(topologyConf);
@@ -315,7 +315,7 @@ public class WorkerState {
         this.assignmentVersions = new AtomicReference<>(new HashMap<>());
         this.outboundTasks = workerOutboundTasks();
         this.trySerializeLocal = topologyConf.containsKey(Config.TOPOLOGY_TESTING_ALWAYS_TRY_SERIALIZE)
-            && (Boolean) topologyConf.get(Config.TOPOLOGY_TESTING_ALWAYS_TRY_SERIALIZE);
+                && (Boolean) topologyConf.get(Config.TOPOLOGY_TESTING_ALWAYS_TRY_SERIALIZE);
         if (trySerializeLocal) {
             LOG.warn("WILL TRY TO SERIALIZE ALL TUPLES (Turn off {} for production", Config.TOPOLOGY_TESTING_ALWAYS_TRY_SERIALIZE);
         }
@@ -343,8 +343,8 @@ public class WorkerState {
             assignment = assignmentVersion.getData();
         } else {
             VersionedData<Assignment>
-                newAssignmentVersion = new VersionedData<>(version,
-                stormClusterState.assignmentInfoWithVersion(topologyId, callback).getData());
+                    newAssignmentVersion = new VersionedData<>(version,
+                    stormClusterState.assignmentInfoWithVersion(topologyId, callback).getData());
             assignmentVersions.getAndUpdate(prev -> {
                 Map<String, VersionedData<Assignment>> next = new HashMap<>(prev);
                 next.put(topologyId, newAssignmentVersion);
@@ -377,10 +377,10 @@ public class WorkerState {
             Map<NodeInfo, IConnection> next = new HashMap<>(prev);
             for (NodeInfo nodeInfo : newConnections) {
                 next.put(nodeInfo,
-                    mqContext.connect(
-                        topologyId,
-                        assignment.get_node_host().get(nodeInfo.get_node()),    // Host
-                        nodeInfo.get_port().iterator().next().intValue()));     // Port
+                        mqContext.connect(
+                                topologyId,
+                                assignment.get_node_host().get(nodeInfo.get_node()),    // Host
+                                nodeInfo.get_port().iterator().next().intValue()));     // Port
             }
             return next;
         });
@@ -413,9 +413,9 @@ public class WorkerState {
     public void refreshStormActive(Runnable callback) {
         StormBase base = stormClusterState.stormBase(topologyId, callback);
         isTopologyActive.set(
-            (null != base) &&
-            (base.get_status() == TopologyStatus.ACTIVE) &&
-            (isWorkerActive.get()));
+                (null != base) &&
+                        (base.get_status() == TopologyStatus.ACTIVE) &&
+                        (isWorkerActive.get()));
         if (null != base) {
             Map<String, DebugOptions> debugOptionsMap = new HashMap<>(base.get_component_debug());
             for (DebugOptions debugOptions : debugOptionsMap.values()) {
@@ -485,8 +485,8 @@ public class WorkerState {
     public void registerCallbacks() {
         LOG.info("Registering IConnectionCallbacks for {}:{}", assignmentId, port);
         receiver.registerRecv(new DeserializingConnectionCallback(topologyConf,
-            getWorkerTopologyContext(),
-            this::transferLocal));
+                getWorkerTopologyContext(),
+                this::transferLocal));
     }
 
     //14.调用用第一个步骤声明的transferLocal()方法 在Worker内部本地发送到相应的线程
@@ -654,9 +654,9 @@ public class WorkerState {
             String codeDir = ConfigUtils.supervisorStormResourcesPath(ConfigUtils.supervisorStormDistRoot(conf, topologyId));
             String pidDir = ConfigUtils.workerPidsRoot(conf, topologyId);
             return new WorkerTopologyContext(systemTopology, topologyConf, taskToComponent, componentToSortedTasks,
-                componentToStreamToFields, topologyId, codeDir, pidDir, port, taskIds,
-                defaultSharedResources,
-                userSharedResources, cachedTaskToNodePort, assignmentId);
+                    componentToStreamToFields, topologyId, codeDir, pidDir, port, taskIds,
+                    defaultSharedResources,
+                    userSharedResources, cachedTaskToNodePort, assignmentId);
         } catch (IOException e) {
             throw Utils.wrapInRuntime(e);
         }
@@ -691,24 +691,24 @@ public class WorkerState {
 
     public boolean areAllConnectionsReady() {
         return cachedNodeToPortSocket.get().values()
-            .stream()
-            .map(WorkerState::isConnectionReady)
-            .reduce((left, right) -> left && right)
-            .orElse(true);
+                .stream()
+                .map(WorkerState::isConnectionReady)
+                .reduce((left, right) -> left && right)
+                .orElse(true);
     }
 
     public static boolean isConnectionReady(IConnection connection) {
         return !(connection instanceof ConnectionWithStatus)
-            || ((ConnectionWithStatus) connection).status() == ConnectionWithStatus.Status.Ready;
+                || ((ConnectionWithStatus) connection).status() == ConnectionWithStatus.Status.Ready;
     }
 
     private List<List<Long>> readWorkerExecutors(IStormClusterState stormClusterState, String topologyId, String assignmentId,
-        int port) {
+                                                 int port) {
         LOG.info("Reading assignments");
         List<List<Long>> executorsAssignedToThisWorker = new ArrayList<>();
         executorsAssignedToThisWorker.add(Constants.SYSTEM_EXECUTOR_ID);
         Map<List<Long>, NodeInfo> executorToNodePort =
-            stormClusterState.assignmentInfo(topologyId, null).get_executor_node_port();
+                stormClusterState.assignmentInfo(topologyId, null).get_executor_node_port();
         for (Map.Entry<List<Long>, NodeInfo> entry : executorToNodePort.entrySet()) {
             NodeInfo nodeInfo = entry.getValue();
             if (nodeInfo.get_node().equals(assignmentId) && nodeInfo.get_port().iterator().next() == port) {
@@ -722,10 +722,10 @@ public class WorkerState {
         Map<List<Long>, DisruptorQueue> receiveQueueMap = new HashMap<>();
         for (List<Long> executor : executors) {
             receiveQueueMap.put(executor, new DisruptorQueue("receive-queue",
-                ObjectReader.getInt(topologyConf.get(Config.TOPOLOGY_EXECUTOR_RECEIVE_BUFFER_SIZE)),
-                (long) topologyConf.get(Config.TOPOLOGY_DISRUPTOR_WAIT_TIMEOUT_MILLIS),
-                ObjectReader.getInt(topologyConf.get(Config.TOPOLOGY_DISRUPTOR_BATCH_SIZE)),
-                (long) topologyConf.get(Config.TOPOLOGY_DISRUPTOR_BATCH_TIMEOUT_MILLIS)));
+                    ObjectReader.getInt(topologyConf.get(Config.TOPOLOGY_EXECUTOR_RECEIVE_BUFFER_SIZE)),
+                    (long) topologyConf.get(Config.TOPOLOGY_DISRUPTOR_WAIT_TIMEOUT_MILLIS),
+                    ObjectReader.getInt(topologyConf.get(Config.TOPOLOGY_DISRUPTOR_BATCH_SIZE)),
+                    (long) topologyConf.get(Config.TOPOLOGY_DISRUPTOR_BATCH_TIMEOUT_MILLIS)));
         }
         return receiveQueueMap;
     }

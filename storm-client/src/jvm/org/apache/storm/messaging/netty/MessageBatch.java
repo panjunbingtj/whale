@@ -18,24 +18,25 @@
 package org.apache.storm.messaging.netty;
 
 import org.apache.storm.messaging.WorkerMessage;
-import org.apache.storm.tuple.MessageId;
+import org.apache.storm.serialization.KryoWorkerMessageSerializer;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 ////////////////////////////////////优化transferAllGrouping/////////////////////////
 class MessageBatch {
     private int buffer_size;
-    private ArrayList<WorkerMessage> msgs;
+    private ArrayList<ByteBuffer> msgs;
     private int encoded_length;
+    private KryoWorkerMessageSerializer serializer;
 
-    MessageBatch(int buffer_size) {
+    MessageBatch(int buffer_size,KryoWorkerMessageSerializer serializer) {
         this.buffer_size = buffer_size;
-        msgs=new ArrayList<>();
+        this.serializer=serializer;
+        msgs=new ArrayList<ByteBuffer>();
         encoded_length = ControlMessage.EOB_MESSAGE.encodeLength();
     }
 
@@ -43,19 +44,20 @@ class MessageBatch {
         if (msg == null)
             throw new RuntimeException("null object forbidden in message batch");
 
-        msgs.add(msg);
-        encoded_length += msgEncodeLength(msg);
+        byte[] bytes = serializer.serialize(msg);
+        msgs.add(ByteBuffer.wrap(bytes));
+        encoded_length +=(2+4+ bytes.length);
     }
 
 
-    private int msgEncodeLength(WorkerMessage workerMessage) {
-        if (workerMessage == null) return 0;
-
-        int size = 4; //INT
-        if (workerMessage.message() != null)
-            size += workerMessage.getEncodeLength();
-        return size;
-    }
+//    private int msgEncodeLength(WorkerMessage workerMessage) {
+//        if (workerMessage == null) return 0;
+//
+//        int size = 4; //INT
+//        if (workerMessage.message() != null)
+//            size += workerMessage.getEncodeLength();
+//        return size;
+//    }
 
     /**
      * @return true if this batch used up allowed buffer size
@@ -84,8 +86,8 @@ class MessageBatch {
     ChannelBuffer buffer() throws Exception {
         ChannelBufferOutputStream bout = new ChannelBufferOutputStream(ChannelBuffers.directBuffer(encoded_length));
 
-        for(WorkerMessage message :msgs){
-            writeWorkerMessage(bout, message);
+        for(ByteBuffer buffer :msgs){
+            writeWorkerMessage(bout, buffer);
         }
 
         //add a END_OF_BATCH indicator
@@ -107,37 +109,11 @@ class MessageBatch {
      *  len ... int(4)
      *  payload ... byte[]     *  
      */
-    private void writeWorkerMessage(ChannelBufferOutputStream bout, WorkerMessage message) throws Exception {
-        int payload_len = 0;
-        if (message.message() != null)
-            payload_len =  message.message().length;
-
-        List<Integer> task_ids = message.tasks();
-        bout.writeShort((short)task_ids.size());
-        for(int task_id : task_ids){
-            if (task_id > Short.MAX_VALUE)
-                throw new RuntimeException("Task ID should not exceed "+Short.MAX_VALUE);
-
-            bout.writeShort((short)task_id);
-        }
-
-        List<MessageId> messageIdList = message.getMessageIdList();
-        bout.writeShort((short)messageIdList.size());
-        for(int i=0;i<messageIdList.size();i++){
-            writeMessageId(bout,messageIdList.get(i));
-        }
-
-        bout.writeInt(payload_len);
-        if (payload_len >0)
-            bout.write(message.message());
+    private void writeWorkerMessage(ChannelBufferOutputStream bout, ByteBuffer buffer) throws Exception {
+        bout.writeShort(-800);
+        bout.writeInt(buffer.array().length);
+        bout.write(buffer.array());
     }
 
-    private void writeMessageId(ChannelBufferOutputStream bout, MessageId messageId) throws Exception {
-        bout.writeShort((short)messageId.getAnchorsToIds().size());
-        for(Map.Entry<Long, Long> anchorToId: messageId.getAnchorsToIds().entrySet()) {
-            bout.writeLong(anchorToId.getKey());
-            bout.writeLong(anchorToId.getValue());
-        }
-    }
 }
 

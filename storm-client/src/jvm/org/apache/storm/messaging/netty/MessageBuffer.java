@@ -18,6 +18,7 @@
 package org.apache.storm.messaging.netty;
 
 import org.apache.storm.messaging.WorkerMessage;
+import org.apache.storm.serialization.KryoWorkerMessageSerializer;
 
 /**
  * Encapsulates the state used for batching up messages.
@@ -25,17 +26,19 @@ import org.apache.storm.messaging.WorkerMessage;
 public class MessageBuffer {
     private final int mesageBatchSize;
     private MessageBatch currentBatch;
+    private KryoWorkerMessageSerializer serializer;
 
-    public MessageBuffer(int mesageBatchSize){
+    public MessageBuffer(int mesageBatchSize,KryoWorkerMessageSerializer serializer){
         this.mesageBatchSize = mesageBatchSize;
-        this.currentBatch = new MessageBatch(mesageBatchSize);
+        this.serializer=serializer;
+        this.currentBatch = new MessageBatch(mesageBatchSize,serializer);
     }
 
     public synchronized MessageBatch add(WorkerMessage msg){
         currentBatch.add(msg);
         if(currentBatch.isFull()){
             MessageBatch ret = currentBatch;
-            currentBatch = new MessageBatch(mesageBatchSize);
+            currentBatch = new MessageBatch(mesageBatchSize,serializer);
             return ret;
         } else {
             return null;
@@ -49,7 +52,7 @@ public class MessageBuffer {
     public synchronized MessageBatch drain() {
         if(!currentBatch.isEmpty()) {
             MessageBatch ret = currentBatch;
-            currentBatch = new MessageBatch(mesageBatchSize);
+            currentBatch = new MessageBatch(mesageBatchSize,serializer);
             return ret;
         } else {
             return null;

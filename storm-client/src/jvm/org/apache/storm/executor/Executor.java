@@ -329,7 +329,6 @@ public abstract class Executor implements Callable, EventHandler<Object> {
         }
     }
 
-
     public void sendUnanchored(Task task, String stream, List<Object> values, ExecutorTransferAllGrouping transfer) {
         //TODO Debug
         Tuple tuple = task.getTuple(stream, values);
