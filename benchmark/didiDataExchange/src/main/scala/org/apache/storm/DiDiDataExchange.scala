@@ -23,12 +23,12 @@ object DiDiDataExchange {
         val orderRDD=order.map(x=>{
             val strings=x.split(",")
             (strings(0),strings(1))
-        }).distinct()
+        })
 
         //orderId (time driverId)
         val joinRDD=orderRDD.leftOuterJoin(gpsRDD).filter(x=>{
             x._2._2.isDefined
-        }).sortByKey().distinct(8)
+        }).sortByKey().coalesce(8)
 
         val driversId=joinRDD.map(_._2._2.get)
         driversId.saveAsTextFile("hdfs://ubuntu2:9000/user/root/TJ/DiDiData/output/driverId")
