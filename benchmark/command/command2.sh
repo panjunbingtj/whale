@@ -1,6 +1,7 @@
 #!/bin/bash
 #查看多核CPU利用率 每隔1s钟输出一个结果
-sar -P ALL 1
+sar -P ALL 1 > downcpuinfo.out
+sar -P ALL 1 > upcpuinfo.out
 
 #DiDi滴滴打车订单匹配Topology
 /storm/kafka_2.10-0.10.2.1/bin/kafka-topics.sh --create --zookeeper node100:2181,node101:2181,node102:2181 --replication-factor 3 --partitions 1 --topic ordersTopic_1
@@ -8,8 +9,8 @@ cat /storm/DiDiData/orders | /storm/kafka_2.10-0.10.2.1/bin/kafka-console-produc
 storm jar /home/zhangfan/didiOrderMatch-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchTopology DiDiOrderMatchTopology ordersTopic_1 3 1 6
 
 #NASDAQ股票交易Topology
-/storm/kafka_2.10-0.10.2.1/bin/kafka-topics.sh --create --zookeeper node100:2181,node101:2181,node102:2181 --replication-factor 3 --partitions 1 --topic stockdealTopic
-cat /storm/StockDealData/STOCKtrace3.txt | /storm/kafka_2.10-0.10.2.1/bin/kafka-console-producer.sh --broker-list node101:9092,node102:9092,node103:9092,node104:9092,node105:9092,node106:9092 --topic stockdealTopic
+/whale/kafka/kafka_2.10-0.10.2.0/bin/kafka-topics.sh --create --zookeeper node24:2181,node25:2181,node26:2181 --replication-factor 3 --partitions 1 --topic stockdealTopic
+cat /whale/StockDealData/STOCKtrace3.txt | /whale/kafka/kafka_2.10-0.10.2.0/bin/kafka-console-producer.sh --broker-list node24:9092,node25:9092,node26:9092,node27:9092,node28:9092,node30:9092 --topic stockdealTopic
 storm jar NASDAQStockDeal-2.0.0-SNAPSHOT.jar org.apache.storm.StockeDealThroughputTopology StockeDealThroughputTopology stockdealTopic 30 1 30
 
 #数据库操作命令
@@ -17,8 +18,8 @@ select avg(latency) from t_latency order by time desc limit 10;
 select avg(throughput) from t_throughput
 
 #Kafa操作命令
-/storm/kafka_2.10-0.10.2.1/bin/kafka-topics.sh --create --zookeeper node100:2181,node101:2181,node102:2181 --replication-factor 3 --partitions 1 --topic ordersTopic_1
-cat /storm/DiDiData/orders | /storm/kafka_2.10-0.10.2.1/bin/kafka-console-producer.sh --broker-list node101:9092,node102:9092,node103:9092,node104:9092,node105:9092,node106:9092 --topic ordersTopic_1
+/whale/kafka/kafka_2.10-0.10.2.0/bin/kafka-topics.sh --create --zookeeper node24:2181,node25:2181,node26:2181 --replication-factor 3 --partitions 1 --topic ordersTopic
+cat /whale/DiDiData/orders | /whale/kafka/kafka_2.10-0.10.2.0/bin/kafka-console-producer.sh --broker-list node24:9092,node25:9092,node26:9092,node27:9092,node28:9092,node30:9092 --topic ordersTopic
 
 storm jar /home/zhangfan/didiOrderMatch-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchTopology DiDiOrderMatchTopology ordersTopic_1 30 1 30
 

@@ -21,7 +21,7 @@ import static org.apache.storm.kafka.spout.KafkaSpoutConfig.FirstPollOffsetStrat
  * storm jar didiOrderMatchWhale-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchLatencyTopology DiDiOrderMatchLatencyTopology ordersTopic 7 1 30 1
  */
 public class DiDiOrderMatchLatencyTopology {
-    public static final String KAFKA_SPOTU_ID ="kafka-spout";
+    public static final String KAFKA_SPOUT_ID ="kafka-spout";
     public static final String THROUGHPUT_BOLT_ID ="throughput-bolt";
     public static final String LATENCY_BOLT_ID ="latency-bolt";
     public static final String DIDIMATCH_BOLT_ID ="didiMatch-bolt";
@@ -40,8 +40,8 @@ public class DiDiOrderMatchLatencyTopology {
         Integer latencyInstancesNum=Integer.valueOf(args[5]);
         TopologyBuilder builder=new TopologyBuilder();
 
-        builder.setSpout(KAFKA_SPOTU_ID, new DiDiOrdersSpout<>(getKafkaSpoutConfig(KAFKA_LOCAL_BROKER,topic)), spoutInstancesNum);
-        builder.setBolt(DIDIMATCH_BOLT_ID, new DiDiMatchLatencyBolt(),boltInstancesNum).allGrouping(KAFKA_SPOTU_ID,SPOUT_STREAM_ID);
+        builder.setSpout(KAFKA_SPOUT_ID, new DiDiOrdersSpout<>(getKafkaSpoutConfig(KAFKA_LOCAL_BROKER,topic)), spoutInstancesNum);
+        builder.setBolt(DIDIMATCH_BOLT_ID, new DiDiMatchLatencyBolt(),boltInstancesNum).allGrouping(KAFKA_SPOUT_ID,SPOUT_STREAM_ID);
         builder.setBolt(LATENCY_BOLT_ID,new LatencyReportBolt(),latencyInstancesNum).shuffleGrouping(DIDIMATCH_BOLT_ID);
         Config config=new Config();
         //config.setDebug(true);

@@ -6,6 +6,7 @@ import org.apache.storm.kafka.spout.KafkaSpoutConfig;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryService;
 import org.apache.storm.report.ThroughputReportBolt;
+import org.apache.storm.topology.SpoutDeclarer;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
@@ -17,7 +18,8 @@ import static org.apache.storm.kafka.spout.KafkaSpoutConfig.FirstPollOffsetStrat
  * locate org.apache.storm.starter
  * Created by mastertj on 2018/3/5.
  * DiDi滴滴打车订单匹配Topology
- * storm jar didiOrderMatchWhale-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchThroughputTopology DiDiOrderMatchThroughputTopology ordersTopic_1 30 1 60
+ * storm jar didiOrderMatchWhale-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchThroughputTopology DiDiOrderMatchThroughputTopology ordersTopic 30 1 60
+ * storm jar didiOrderMatchWhale-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchThroughputTopology DiDiOrderMatchThroughputTopology ordersTopic 7 1 30
  */
 public class DiDiOrderMatchThroughputTopology {
     public static final String KAFKA_SPOTU_ID ="kafka-spout";
@@ -27,7 +29,8 @@ public class DiDiOrderMatchThroughputTopology {
     public static final String SPOUT_STREAM_ID ="spout_stream";
     public static final String ACKCOUNT_STREAM_ID="ackcountstream";
     public static final String LATENCYTIME_STREAM_ID="latencytimestream";
-    public static final String KAFKA_LOCAL_BROKER = "node101:9092,node102:9092,node103:9092,node104:9092,node105:9092,node106:9092";
+    public static final String KAFKA_LOCAL_BROKER = "node24:9092,node25:9092,node26:9092,node27:9092,node28:9092,node30:9092";
+    //public static final String KAFKA_LOCAL_BROKER = "node101:9092,node102:9092,node103:9092,node104:9092,node105:9092,node106:9092";
     //public static final String KAFKA_LOCAL_BROKER = "ubuntu1:9092,ubuntu2:9092,ubuntu4:9092";
 
     public static void main(String[] args) throws Exception{
@@ -39,7 +42,8 @@ public class DiDiOrderMatchThroughputTopology {
 
         TopologyBuilder builder=new TopologyBuilder();
 
-        builder.setSpout(KAFKA_SPOTU_ID, new DiDiOrdersSpout<>(getKafkaSpoutConfig(KAFKA_LOCAL_BROKER,topic)), spoutInstancesNum);
+        SpoutDeclarer spoutDeclarer = builder.setSpout(KAFKA_SPOTU_ID, new DiDiOrdersSpout<>(getKafkaSpoutConfig(KAFKA_LOCAL_BROKER, topic)), spoutInstancesNum);
+        spoutDeclarer.setCPULoad(100);
         builder.setBolt(DIDIMATCH_BOLT_ID, new DiDiMatchThroughputBolt(),boltInstancesNum).allGrouping(KAFKA_SPOTU_ID,SPOUT_STREAM_ID);
         builder.setBolt(THROUGHPUT_BOLT_ID, new ThroughputReportBolt(),1).shuffleGrouping(DIDIMATCH_BOLT_ID);
         Config config=new Config();
@@ -62,7 +66,7 @@ public class DiDiOrderMatchThroughputTopology {
 //                (r) -> new Values(r.topic(), r.partition(), r.offset(), r.key(), r.value()),
 //                new Fields("topic", "partition", "offset", "key", "value"), TOPIC_2_STREAM);
         return KafkaSpoutConfig.builder(bootstrapServers, new String[]{topic})
-                .setProp(ConsumerConfig.GROUP_ID_CONFIG, "DiDiOrderMatchThroughputGroup")
+                .setProp(ConsumerConfig.GROUP_ID_CONFIG, "DiDiOrderMatchThroughputGroup1")
                 .setRetry(getRetryService())
                 .setRecordTranslator(trans)
                 .setProcessingGuarantee(KafkaSpoutConfig.ProcessingGuarantee.AT_MOST_ONCE)

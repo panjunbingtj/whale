@@ -92,7 +92,7 @@ public abstract class Executor implements Callable, EventHandler<Object> {
     protected final Callable<Boolean> sampler;
 
     ///////////////////优化///////////////////
-    protected ExecutorTransfer executorTransfer;
+    //protected ExecutorTransfer executorTransfer;
     protected ExecutorTransferAllGrouping executorTransferAllGrouping;
     ///////////////////优化///////////////////
 
@@ -103,7 +103,7 @@ public abstract class Executor implements Callable, EventHandler<Object> {
     protected final Random rand;
 
     ///////////////////优化///////////////////
-    protected final DisruptorQueue sendQueue;
+    //protected final DisruptorQueue sendQueue;
     protected final DisruptorQueue sendQueueAllGrouping;
     protected final DisruptorQueue receiveQueue;
     //////////////////优化///////////////////
@@ -131,8 +131,8 @@ public abstract class Executor implements Callable, EventHandler<Object> {
         this.stormActive = workerData.getIsTopologyActive();
         this.stormComponentDebug = workerData.getStormComponentToDebug();
 
-        this.sendQueue = mkExecutorBatchQueue(topoConf, executorId);
-        this.executorTransfer = new ExecutorTransfer(workerData, sendQueue, topoConf);
+        //this.sendQueue = mkExecutorBatchQueue(topoConf, executorId);
+        //this.executorTransfer = new ExecutorTransfer(workerData, sendQueue, topoConf);
         this.sendQueueAllGrouping=mkExecutorAllGroupingBatchQueue(topoConf,executorId);
         this.executorTransferAllGrouping=new ExecutorTransferAllGrouping(workerData, sendQueueAllGrouping, topoConf);
 
@@ -242,8 +242,8 @@ public abstract class Executor implements Callable, EventHandler<Object> {
          * 5.在Executor线程 执行execute()方法后，不断的Loop调用executorTransfer的Callable接口。一旦sendQueue buffer达到一定的阈值后。
          * 调用ExecutorTransfer的Call方法
          */
-        Utils.SmartThread systemThreads =
-                Utils.asyncLoop(executorTransfer, executorTransfer.getName(), reportErrorDie);
+//        Utils.SmartThread systemThreads =
+//                Utils.asyncLoop(executorTransfer, executorTransfer.getName(), reportErrorDie);
 
         Utils.SmartThread systemAllGroupingThreads =
                 Utils.asyncLoop(executorTransferAllGrouping, executorTransferAllGrouping.getName(), reportErrorDie);
@@ -254,7 +254,7 @@ public abstract class Executor implements Callable, EventHandler<Object> {
         setupTicks(StatsUtil.SPOUT.equals(type));
 
         LOG.info("Finished loading executor " + componentId + ":" + executorId);
-        return new ExecutorShutdown(this, Lists.newArrayList(systemThreads,systemAllGroupingThreads, handlers), idToTask, receiveQueue, sendQueue);
+        return new ExecutorShutdown(this, Lists.newArrayList(systemAllGroupingThreads,systemAllGroupingThreads, handlers), idToTask, receiveQueue, sendQueueAllGrouping);
     }
 
     public abstract void tupleActionFn(int taskId, TupleImpl tuple) throws Exception;
@@ -535,9 +535,9 @@ public abstract class Executor implements Callable, EventHandler<Object> {
         return isDebug;
     }
 
-    public ExecutorTransfer getExecutorTransfer() {
-        return executorTransfer;
-    }
+//    public ExecutorTransfer getExecutorTransfer() {
+//        return executorTransfer;
+//    }
 
     public IReportError getReportError() {
         return reportError;
@@ -567,9 +567,9 @@ public abstract class Executor implements Callable, EventHandler<Object> {
         return receiveQueue.getThrottleOn();
     }
 
-    public DisruptorQueue getTransferWorkerQueue() {
-        return sendQueue;
-    }
+//    public DisruptorQueue getTransferWorkerQueue() {
+//        return sendQueue;
+//    }
 
     public IStormClusterState getStormClusterState() {
         return stormClusterState;
@@ -595,10 +595,15 @@ public abstract class Executor implements Callable, EventHandler<Object> {
         return intervalToTaskToMetricToRegistry;
     }
 
-    @VisibleForTesting
-    public void setLocalExecutorTransfer(ExecutorTransfer executorTransfer) {
-        this.executorTransfer = executorTransfer;
+    public DisruptorQueue getSendQueueAllGrouping() {
+        return sendQueueAllGrouping;
     }
+
+    @VisibleForTesting
+    public void setLocalExecutorTransfer(ExecutorTransferAllGrouping executorTransfer) {
+        this.executorTransferAllGrouping = executorTransfer;
+    }
+
 
     private static List<Object> All_CONFIGS() {
         List<Object> ret = new ArrayList<Object>();

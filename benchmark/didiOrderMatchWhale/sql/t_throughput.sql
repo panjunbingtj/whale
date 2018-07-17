@@ -19,7 +19,7 @@ SET FOREIGN_KEY_CHECKS=0;
 -- Table structure for t_latency
 -- ----------------------------
 DROP TABLE IF EXISTS `t_throughput`;
-CREATE TABLE `t_latency` (
+CREATE TABLE `t_throughput` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `taskid` int(11) NOT NULL,
   `throughput` bigint(20) NOT NULL,

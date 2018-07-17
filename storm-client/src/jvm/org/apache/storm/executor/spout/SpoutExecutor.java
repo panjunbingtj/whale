@@ -18,7 +18,6 @@
 package org.apache.storm.executor.spout;
 
 import com.google.common.collect.ImmutableMap;
-import java.util.concurrent.Callable;
 import org.apache.storm.Config;
 import org.apache.storm.Constants;
 import org.apache.storm.ICredentialsListener;
@@ -37,19 +36,14 @@ import org.apache.storm.spout.ISpoutWaitStrategy;
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.stats.SpoutExecutorStats;
 import org.apache.storm.tuple.TupleImpl;
-import org.apache.storm.utils.Utils;
-import org.apache.storm.utils.DisruptorQueue;
-import org.apache.storm.utils.MutableLong;
-import org.apache.storm.utils.ObjectReader;
-import org.apache.storm.utils.ReflectionUtils;
-import org.apache.storm.utils.RotatingMap;
-import org.apache.storm.utils.Time;
+import org.apache.storm.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SpoutExecutor extends Executor {
@@ -118,7 +112,7 @@ public class SpoutExecutor extends Executor {
             this.outputCollectors.add(outputCollector);
 
             taskData.getBuiltInMetrics().registerAll(topoConf, taskData.getUserContext());
-            Map<String, DisruptorQueue> map = ImmutableMap.of("sendqueue", sendQueue, "receive", receiveQueue);
+            Map<String, DisruptorQueue> map = ImmutableMap.of("sendqueue", sendQueueAllGrouping, "receive", receiveQueue);
             BuiltinMetricsUtil.registerQueueMetrics(map, topoConf, taskData.getUserContext());
 
             if (spoutObject instanceof ICredentialsListener) {
@@ -152,7 +146,7 @@ public class SpoutExecutor extends Executor {
                             spout.activate();
                         }
                     }
-                    if (!sendQueue.isFull() && !throttleOn && !reachedMaxSpoutPending) {
+                    if (!sendQueueAllGrouping.isFull() && !throttleOn && !reachedMaxSpoutPending) {
                         for (ISpout spout : spouts) {
                             spout.nextTuple();
                         }
