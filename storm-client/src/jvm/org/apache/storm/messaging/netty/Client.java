@@ -295,6 +295,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
         }
 
         synchronized (writeLock) {
+            msgs.setStartTimeMills(System.currentTimeMillis());
             MessageBatch full = batcher.add(msgs);
             if(full != null){
                 flushMessages(channel, full);

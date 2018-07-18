@@ -24,6 +24,7 @@ import org.apache.storm.serialization.KryoTupleDeserializer;
 import org.apache.storm.task.GeneralTopologyContext;
 import org.apache.storm.tuple.AddressedTuple;
 import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.TupleImpl;
 import org.apache.storm.utils.ObjectReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,8 +77,18 @@ public class DeserializingConnectionCallback implements IConnectionCallback, IMe
         KryoTupleDeserializer des = _des.get();
         for(WorkerMessage workerMessage : batch){
             ArrayList<AddressedTuple> ret = new ArrayList<>();
+            long clientTimeMills = workerMessage.getStartTimeMills();
+            long serverTimeMills = System.currentTimeMillis();
+            long startDeserializeTime=System.currentTimeMillis();
             LOG.debug("the time of start deserializing : {}", System.currentTimeMillis());
             Tuple tuple = des.deserialize(workerMessage.message());
+            long endDeserializeTime=System.currentTimeMillis();
+            TupleImpl tuple1=(TupleImpl)tuple;
+            tuple1.startDeserializingTime=startDeserializeTime;
+            tuple1.endDeserializingTime=endDeserializeTime;
+            tuple1.setClientTime(clientTimeMills);
+            tuple1.setServerTime(serverTimeMills);
+            tuple1.setCommunicationTime(serverTimeMills-clientTimeMills);
             //TimeUtils.waitForTimeMills(delay);
             for(Integer taskid : workerMessage.tasks()){
                 AddressedTuple addrTuple = new AddressedTuple(taskid, tuple);

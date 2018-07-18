@@ -104,11 +104,14 @@ public class MessageDecoder extends FrameDecoder {
             // case 3: Worker Message
 
             // Make sure that we have received at least an integer (length)
-            if (available < 4+2*code) {
+            if (available < 4+8+2*code) {
                 // need more data
                 buf.resetReaderIndex();
                 break;
             }
+
+            available -= 8;
+            long startTimeMills = buf.readLong();
 
             // Read the tasks_id field
             List<Integer> task_ids=new ArrayList<>();
@@ -122,7 +125,7 @@ public class MessageDecoder extends FrameDecoder {
             available -= (4+2*code);
 
             if (length <= 0) {
-                ret.add(new WorkerMessage(task_ids, null));
+                ret.add(new WorkerMessage(task_ids, startTimeMills, null));
                 break;
             }
 
@@ -140,7 +143,7 @@ public class MessageDecoder extends FrameDecoder {
 
             // Successfully decoded a frame.
             // Return a TaskMessage object
-            ret.add(new WorkerMessage(task_ids, payload.array()));
+            ret.add(new WorkerMessage(task_ids, startTimeMills, payload.array()));
         }
 
         if (ret.size() == 0) {

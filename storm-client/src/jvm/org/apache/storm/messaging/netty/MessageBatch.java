@@ -49,7 +49,7 @@ class MessageBatch {
     private int msgEncodeLength(WorkerMessage workerMessage) {
         if (workerMessage == null) return 0;
 
-        int size = 4; //INT
+        int size = 4 ; //INT
         if (workerMessage.message() != null)
             size += workerMessage.getEncodeLength();
         return size;
@@ -110,6 +110,7 @@ class MessageBatch {
 
         List<Integer> task_ids = message.tasks();
         bout.writeShort((short)task_ids.size());
+        bout.writeLong(message.getStartTimeMills());
         for(int task_id : task_ids){
             if (task_id > Short.MAX_VALUE)
                 throw new RuntimeException("Task ID should not exceed "+Short.MAX_VALUE);

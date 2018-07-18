@@ -71,4 +71,20 @@ public interface Tuple extends ITuple{
      * Gets the topology context associated with the tuple
      */
     public GeneralTopologyContext getContext();
+
+    public long getStartSerializingTime();
+
+    public long getEndSerializingTime();
+
+    public long getStartDeserializingTime();
+
+    public long getEndDeserializingTime();
+
+    //获取客户端发送时间
+    public long getClientTime();
+
+    //获取服务器端接收时间
+    public long getServerTime();
+
+    public long getCommunicationTime();
 }
