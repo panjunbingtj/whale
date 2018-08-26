@@ -275,9 +275,9 @@ public class KafkaSpout<K, V> extends BaseRichSpout {
             final CommitMetadata committedMetadata = JSON_MAPPER.readValue(committedOffset.metadata(), CommitMetadata.class);
             return committedMetadata.getTopologyId().equals(context.getStormId());
         } catch (IOException e) {
-            LOG.warn("Failed to deserialize [{}]. Error likely occurred because the last commit "
-                + "for this topic-partition was done using an earlier version of Storm. "
-                + "Defaulting to behavior compatible with earlier version", committedOffset);
+//            LOG.warn("Failed to deserialize [{}]. Error likely occurred because the last commit "
+//                + "for this topic-partition was done using an earlier version of Storm. "
+//                + "Defaulting to behavior compatible with earlier version", committedOffset);
             LOG.trace("", e);
             return false;
         }

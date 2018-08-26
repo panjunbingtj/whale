@@ -171,6 +171,13 @@
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
 
+        <!-- rdma -->
+        <dependency>
+            <groupId>com.ibm.disni</groupId>
+            <artifactId>disni</artifactId>
+            <version>1.6</version>
+        </dependency>
+
         <!-- belows are transitive dependencies which are version managed in storm pom -->
         <!-- httpclient is derived from thrift -->
         <dependency>
