@@ -17,6 +17,7 @@
  */
 package org.apache.storm.messaging.netty;
 
+import com.ibm.disni.channel.*;
 import org.apache.storm.Config;
 import org.apache.storm.grouping.Load;
 import org.apache.storm.messaging.ConnectionWithStatus;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -133,6 +135,11 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
 
     private final Object writeLock = new Object();
 
+    ///////////////////////////////////////////RDMA/////////////////////////////////////////
+    private RdmaNode rdmaClient;
+    private RdmaChannel rdmaChannel;
+    private VerbsTools commRdma;
+
     @SuppressWarnings("rawtypes")
     Client(Map<String, Object> topoConf, ChannelFactory factory, HashedWheelTimer scheduler, String host, int port, Context context) {
         this.topoConf = topoConf;
@@ -152,12 +159,46 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
 
         // Initiate connection to remote destination
         bootstrap = createClientBootstrap(factory, bufferSize, topoConf);
+
         dstHost = host;
         dstAddress = new InetSocketAddress(host, port);
         dstAddressPrefixedName = prefixedName(dstAddress);
         launchChannelAliveThread();
         scheduleConnect(NO_DELAY_MS);
         batcher = new MessageBuffer(messageBatchSize);
+
+        String hostAddress = ((InetSocketAddress) channelRef.get().getLocalAddress()).getAddress().getHostAddress();
+        try {
+            ///////////////////////////////////////////RDMA/////////////////////////////////////////
+            rdmaClient=new RdmaNode(hostAddress, true, new RdmaShuffleConf(), new RdmaCompletionListener() {
+                @Override
+                public void onSuccess(ByteBuffer buf) {
+
+                }
+
+                @Override
+                public void onFailure(Throwable exception) {
+                    exception.printStackTrace();
+                }
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        InetSocketAddress address = null;
+
+        while (true){
+            address = rdmaClient.passiveRdmaInetSocketMap.get(host);
+            if(address!=null){
+                rdmaChannel=rdmaClient.passiveRdmaChannelMap.get(address);
+                if(rdmaChannel.isConnected())
+                    break;
+            }
+        }
+
+        commRdma=rdmaChannel.getCommRdma();
+
     }
 
     /**
@@ -192,6 +233,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
         bootstrap.setOption("keepAlive", true);
         bootstrap.setPipelineFactory(new StormClientPipelineFactory(this, topoConf));
         return bootstrap;
+
     }
 
     private String prefixedName(InetSocketAddress dstAddress) {
@@ -313,11 +355,11 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
         } else {
             // Channel's buffer is full, meaning that we have time to wait other messages to arrive, and create a bigger
             // batch. This yields better throughput.
-            // We can rely on `notifyInterestChanged` to push these messages as soon as there is spece in Netty's buffer
+            // We0 can rely on `notifyInterestChanged` to push these messages as soon as there is spece in Netty's buffer
             // because we know `Channel.isWritable` was false after the messages were already in the buffer.
         }
     }
-    ////////////////////////////////////优化transferAllGrouping/////////////////////////
+    ////////////////////////////////////优化transferAllGrouping/////////////////////////////////
 
     private Channel getConnectedChannel() {
         Channel channel = channelRef.get();
@@ -380,7 +422,6 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
                     messagesLost.getAndAdd(numMessages);
                 }
             }
-
         });
     }
 

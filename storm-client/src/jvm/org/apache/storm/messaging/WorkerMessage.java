@@ -18,6 +18,9 @@ public class WorkerMessage {
         this._message = _message;
     }
 
+    public WorkerMessage() {
+    }
+
     public List<Integer> tasks() {
         return _taskIds;
     }
