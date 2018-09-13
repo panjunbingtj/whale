@@ -176,6 +176,12 @@
             <groupId>com.ibm.disni</groupId>
             <artifactId>disni</artifactId>
             <version>1.6</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-log4j12</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- belows are transitive dependencies which are version managed in storm pom -->

@@ -113,7 +113,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
         dstAddressPrefixedName = prefixedName(dstAddress);
 
         ///add IBAddress Configure
-        BufferedReader bufferedReader=new BufferedReader(new FileReader("/xxx"));
+        BufferedReader bufferedReader=new BufferedReader(new FileReader("/whale/RDMAHostName"));
         this.IBAddress=bufferedReader.readLine();
 
         scheduler = new HashedWheelTimer(new NettyRenameThreadFactory("client-schedule-service"));
@@ -137,7 +137,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
             public void onFailure(Throwable exception) {
                 exception.printStackTrace();
             }
-        }, rdmaChannel -> {
+        }, (remote,rdmaChannel) -> {
 
         });
 

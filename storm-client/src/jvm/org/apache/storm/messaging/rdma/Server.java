@@ -51,7 +51,7 @@ public class Server extends ConnectionWithStatus implements IStatefulObject {
         this.port = port;
 
         ///add IBAddress Configure
-        BufferedReader bufferedReader=new BufferedReader(new FileReader("/xxx"));
+        BufferedReader bufferedReader=new BufferedReader(new FileReader("/whale/RDMAHostName"));
         this.IBAddress=bufferedReader.readLine();
 
         rdmaServer=new RdmaNode(IBAddress, false, new RdmaShuffleConf(), new RdmaCompletionListener() {

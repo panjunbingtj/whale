@@ -37,7 +37,14 @@ public class Context implements IContext {
      */
     @Override
     public IConnection bind(String storm_id, int port) {
-        return null;
+        IConnection server = null;
+        try {
+            server = new Server(topoConf, port);
+            connections.put(key(storm_id, server.getPort()), server);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return server;
     }
 
     /**
@@ -45,7 +52,19 @@ public class Context implements IContext {
      */
     @Override
     public IConnection connect(String storm_id, String host, int port){
-        return null;
+        IConnection client=null;
+        try {
+            IConnection connection = connections.get(key(host,port));
+            if(connection !=null)
+            {
+                return connection;
+            }
+            client = new Client(topoConf, host, port, this);
+            connections.put(key(host, client.getPort()), client);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return client;
     }
 
     synchronized void removeClient(String host, int port) {

@@ -17,7 +17,6 @@
  */
 package org.apache.storm.messaging.netty;
 
-import com.ibm.disni.channel.*;
 import org.apache.storm.Config;
 import org.apache.storm.grouping.Load;
 import org.apache.storm.messaging.ConnectionWithStatus;
@@ -39,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -135,11 +133,6 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
 
     private final Object writeLock = new Object();
 
-    ///////////////////////////////////////////RDMA/////////////////////////////////////////
-    private RdmaNode rdmaClient;
-    private RdmaChannel rdmaChannel;
-    private VerbsTools commRdma;
-
     @SuppressWarnings("rawtypes")
     Client(Map<String, Object> topoConf, ChannelFactory factory, HashedWheelTimer scheduler, String host, int port, Context context) {
         this.topoConf = topoConf;
@@ -166,39 +159,6 @@ public class Client extends ConnectionWithStatus implements IStatefulObject, ISa
         launchChannelAliveThread();
         scheduleConnect(NO_DELAY_MS);
         batcher = new MessageBuffer(messageBatchSize);
-
-        String hostAddress = ((InetSocketAddress) channelRef.get().getLocalAddress()).getAddress().getHostAddress();
-        try {
-            ///////////////////////////////////////////RDMA/////////////////////////////////////////
-            rdmaClient=new RdmaNode(hostAddress, true, new RdmaShuffleConf(), new RdmaCompletionListener() {
-                @Override
-                public void onSuccess(ByteBuffer buf) {
-
-                }
-
-                @Override
-                public void onFailure(Throwable exception) {
-                    exception.printStackTrace();
-                }
-            });
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        InetSocketAddress address = null;
-
-        while (true){
-            address = rdmaClient.passiveRdmaInetSocketMap.get(host);
-            if(address!=null){
-                rdmaChannel=rdmaClient.passiveRdmaChannelMap.get(address);
-                if(rdmaChannel.isConnected())
-                    break;
-            }
-        }
-
-        commRdma=rdmaChannel.getCommRdma();
-
     }
 
     /**

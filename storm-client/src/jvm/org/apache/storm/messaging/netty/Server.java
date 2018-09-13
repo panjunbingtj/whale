@@ -17,7 +17,6 @@
  */
 package org.apache.storm.messaging.netty;
 
-import com.ibm.disni.channel.*;
 import org.apache.storm.Config;
 import org.apache.storm.grouping.Load;
 import org.apache.storm.messaging.ConnectionWithStatus;
@@ -39,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -64,11 +62,6 @@ class  Server extends ConnectionWithStatus implements IStatefulObject, ISaslServ
     private KryoValuesSerializer _ser;
     private IConnectionCallback _cb = null; 
     private final int boundPort;
-
-    ///////////////////////////////////////////RDMA/////////////////////////////////////////
-    private RdmaNode rdmaServer;
-    private RdmaChannel rdmaChannel;
-    private VerbsTools commRdma;
 
     @SuppressWarnings("rawtypes")
     Server(Map<String, Object> topoConf, int port) {
@@ -107,30 +100,6 @@ class  Server extends ConnectionWithStatus implements IStatefulObject, ISaslServ
         Channel channel = bootstrap.bind(new InetSocketAddress(port));
         boundPort = ((InetSocketAddress)channel.getLocalAddress()).getPort();
         allChannels.add(channel);
-
-        String hostAddress = ((InetSocketAddress) channel.getLocalAddress()).getAddress().getHostAddress();
-        String dstAddress = ((InetSocketAddress) channel.getRemoteAddress()).getAddress().getHostAddress();
-        ///////////////////////////////////////////RDMA/////////////////////////////////////////
-        try {
-            rdmaServer=new RdmaNode(hostAddress, true, new RdmaShuffleConf(), new RdmaCompletionListener() {
-                @Override
-                public void onSuccess(ByteBuffer buf) {
-
-                }
-
-                @Override
-                public void onFailure(Throwable exception) {
-                    exception.printStackTrace();
-                }
-            });
-
-            rdmaChannel = rdmaServer.getRdmaChannel(new InetSocketAddress(dstAddress, 1955), true);
-
-            commRdma=rdmaChannel.getCommRdma();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
     }
     
     private void addReceiveCount(String from, int amount) {
