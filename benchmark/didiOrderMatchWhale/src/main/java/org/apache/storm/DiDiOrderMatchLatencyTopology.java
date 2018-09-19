@@ -28,7 +28,8 @@ public class DiDiOrderMatchLatencyTopology {
     public static final String SPOUT_STREAM_ID ="spout_stream";
     public static final String ACKCOUNT_STREAM_ID="ackcountstream";
     public static final String LATENCYTIME_STREAM_ID="latencytimestream";
-    public static final String KAFKA_LOCAL_BROKER = "node101:9092,node102:9092,node103:9092,node104:9092,node105:9092,node106:9092";
+    public static final String KAFKA_LOCAL_BROKER = "node24:9092,node25:9092,node26:9092,node27:9092,node28:9092,node30:9092";
+    //public static final String KAFKA_LOCAL_BROKER = "node101:9092,node102:9092,node103:9092,node104:9092,node105:9092,node106:9092";
     //public static final String KAFKA_LOCAL_BROKER = "ubuntu1:9092,ubuntu2:9092,ubuntu4:9092";
 
     public static void main(String[] args) throws Exception{

@@ -65,7 +65,9 @@ public class Server extends ConnectionWithStatus implements IStatefulObject {
                 exception.printStackTrace();
             }
         }, (remote, rdmaChannel) -> {
-                VerbsTools commRdma = rdmaChannel.getCommRdma();
+
+            MessageDecoder messageDecoder=new MessageDecoder();
+            VerbsTools commRdma = rdmaChannel.getCommRdma();
 
             ByteBuffer recvBuf = null;
             RdmaBuffer dataMr = null;
@@ -75,87 +77,84 @@ public class Server extends ConnectionWithStatus implements IStatefulObject {
             try {
                 RdmaBuffer recvMr = rdmaChannel.getReceiveBuffer();
                 recvBuf = recvMr.getByteBuffer();
-                dataMr = rdmaChannel.getDataBuffer();
-                dataBuf = dataMr.getByteBuffer();
                 sendMr = rdmaChannel.getSendBuffer();
                 sendBuf = sendMr.getByteBuffer();
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            LOG.info("first add: "+recvBuf.getLong()+" lkey: "+recvBuf.getInt()+" length: "+recvBuf.getInt());
+            LOG.debug("first add: "+recvBuf.getLong()+" lkey: "+recvBuf.getInt()+" length: "+recvBuf.getInt());
 
-                while (true) {
-                    try {
-                        //initSGRecv
-                        rdmaChannel.initRecvs();
-                        //let's wait for the first message to be received from the server
-                        rdmaChannel.completeSGRecv();
+            while (true) {
+                try {
+                    //initSGRecv
+                    rdmaChannel.initRecvs();
+                    //let's wait for the first message to be received from the server
+                    boolean m_bool = rdmaChannel.completeSGRecv();
 
-                        recvBuf.clear();
-                        dataBuf.clear();
-                        long addr = recvBuf.getLong();
-                        int lkey = recvBuf.getInt();
-                        int length = recvBuf.getInt();
-                        LOG.info("second add: " + addr + " lkey: " + lkey + " length: " + length);
-                        LOG.info("second add: " + dataBuf.getLong() + " lkey: " + dataBuf.getInt() + " length: " + dataBuf.getInt());
+                    LOG.debug("rdmaChannel completeSGRecv : "+m_bool);
 
-                        recvBuf.clear();
-                        dataBuf.clear();
-                        sendBuf.clear();
-                        rdmaChannel.rdmaReadInQueue(new RdmaCompletionListener() {
-                            @Override
-                            public void onSuccess(ByteBuffer buf) {
-                                LOG.info("RdmaActiveReadClient::read memory from server: " + buf.asCharBuffer().toString());
-                            }
+                    recvBuf.clear();
+                    long addr = recvBuf.getLong();
+                    int lkey = recvBuf.getInt();
+                    int length = recvBuf.getInt();
+                    LOG.debug("second add: " + addr + " lkey: " + lkey + " length: " + length);
 
-                            @Override
-                            public void onFailure(Throwable exception) {
-                                exception.printStackTrace();
-                            }
-                        }, dataMr.getAddress(), dataMr.getLkey(), new int[]{length}, new long[]{addr}, new int[]{lkey});
+                    dataMr = new RdmaBuffer(rdmaServer.getRdmaBufferManager().getPd(),length);
+                    dataBuf= dataMr.getByteBuffer();
 
-                        //let's prepare a one-sided RDMA read operation to fetch the content of that remote buffer
-                        LinkedList<IbvSendWR> wrList_send = new LinkedList<IbvSendWR>();
-                        IbvSge sgeSend = new IbvSge();
+                    recvBuf.clear();
+                    dataBuf.clear();
+                    sendBuf.clear();
+                    rdmaChannel.rdmaReadInQueue(new RdmaCompletionListener() {
+                        @Override
+                        public void onSuccess(ByteBuffer buf) {
+                            //LOG.info("RdmaActiveReadClient::read memory from server: " + buf.asCharBuffer().toString());
+                        }
+                        @Override
+                        public void onFailure(Throwable exception) {
+                            exception.printStackTrace();
+                        }
+                    }, dataMr.getAddress(), dataMr.getLkey(), new int[]{length}, new long[]{addr}, new int[]{lkey});
 
-                        dataBuf.clear();
-                        LOG.info(dataBuf.toString());
-                        LOG.info("RdmaActiveReadClient::read memory from server: " + dataBuf.asCharBuffer().toString());
+                    //rdmaChannel.completeSGRecv();
 
-                        WorkerMessage workerMessage=new WorkerMessage();
-                        workerMessage.deserialize(dataBuf);
-                        received(workerMessage,remote,rdmaChannel);
+                    LOG.debug("RDMA Read Qequest SEND");
 
-                        LinkedList<IbvSge> sgeList = new LinkedList<IbvSge>();
-                        sgeList.add(sgeSend);
-                        IbvSendWR sendWR = new IbvSendWR();
-                        sgeSend = new IbvSge();
-                        sgeSend.setAddr(sendMr.getAddress());
-                        sgeSend.setLength(sendMr.getLength());
-                        sgeSend.setLkey(sendMr.getLkey());
-                        sgeList.clear();
-                        sgeList.add(sgeSend);
-                        sendWR = new IbvSendWR();
-                        sendWR.setWr_id(1002);
-                        sendWR.setSg_list(sgeList);
-                        sendWR.setOpcode(IbvSendWR.IBV_WR_SEND);
-                        sendWR.setSend_flags(IbvSendWR.IBV_SEND_SIGNALED);
-                        wrList_send.clear();
-                        wrList_send.add(sendWR);
+                    received(messageDecoder.decode(dataBuf), remote, rdmaChannel);
 
-                        //let's post the final message
-                        recvBuf.clear();
-                        dataBuf.clear();
-                        sendBuf.clear();
-                        commRdma.send(wrList_send, true, false);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    //let's prepare a one-sided RDMA read operation to fetch the content of that remote buffer
+                    LinkedList<IbvSendWR> wrList_send = new LinkedList<IbvSendWR>();
+                    IbvSge sgeSend = new IbvSge();
+                    LinkedList<IbvSge> sgeList = new LinkedList<IbvSge>();
+                    sgeList.add(sgeSend);
+                    IbvSendWR sendWR = new IbvSendWR();
+                    sgeSend = new IbvSge();
+                    sgeSend.setAddr(sendMr.getAddress());
+                    sgeSend.setLength(sendMr.getLength());
+                    sgeSend.setLkey(sendMr.getLkey());
+                    sgeList.clear();
+                    sgeList.add(sgeSend);
+                    sendWR = new IbvSendWR();
+                    sendWR.setWr_id(1002);
+                    sendWR.setSg_list(sgeList);
+                    sendWR.setOpcode(IbvSendWR.IBV_WR_SEND);
+                    sendWR.setSend_flags(IbvSendWR.IBV_SEND_SIGNALED);
+                    wrList_send.clear();
+                    wrList_send.add(sendWR);
+
+                    //let's post the final message
+                    recvBuf.clear();
+                    dataBuf.clear();
+                    sendBuf.clear();
+                    commRdma.send(wrList_send, true, false);
+
+                    LOG.debug("Final Message Request SEND");
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+            }
         });
-
-
         // Bind and start to accept incoming connections.
     }
 
@@ -203,7 +202,6 @@ public class Server extends ConnectionWithStatus implements IStatefulObject {
 //        } catch (IOException e) {
 //            throw new RuntimeException(e);
 //        }
-
     }
 
     @Override
@@ -271,7 +269,7 @@ public class Server extends ConnectionWithStatus implements IStatefulObject {
 
     public void received(Object message, String remote, RdmaChannel channel)  throws InterruptedException {
         List<WorkerMessage> messages = (List<WorkerMessage>) message;
-        LOG.debug("Server received WorkerMessage : {}",messages);
+        LOG.debug("Server received WorkerMessage : {}",messages.size());
         enqueue(messages, remote);
     }
 

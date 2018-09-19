@@ -81,10 +81,16 @@ class MessageBatch {
      * create a buffer containing the encoding of this batch
      */
     ChannelBuffer buffer() throws Exception {
+        //RDMA Whale Benchmark
+//        Integer workerNums=6;
+//        encoded_length+=2*workerNums*msgs.size();
+        encoded_length+=2*msgs.size();
         ChannelBufferOutputStream bout = new ChannelBufferOutputStream(ChannelBuffers.directBuffer(encoded_length));
 
         for(WorkerMessage message :msgs){
             writeWorkerMessage(bout, message);
+//            for(int i=0;i<workerNums;i++)
+//                bout.writeShort(2);
         }
 
         //add a END_OF_BATCH indicator
@@ -121,5 +127,6 @@ class MessageBatch {
         if (payload_len >0)
             bout.write(message.message());
     }
+
 
 }

@@ -6,14 +6,10 @@ import org.apache.storm.grouping.Load;
 import org.apache.storm.messaging.ConnectionWithStatus;
 import org.apache.storm.messaging.IConnectionCallback;
 import org.apache.storm.messaging.WorkerMessage;
-import org.apache.storm.messaging.netty.NettyRenameThreadFactory;
 import org.apache.storm.metric.api.IStatefulObject;
 import org.apache.storm.utils.ObjectReader;
 import org.apache.storm.utils.StormBoundedExponentialBackoffRetry;
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.util.HashedWheelTimer;
-import org.jboss.netty.util.Timeout;
-import org.jboss.netty.util.TimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +19,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -79,6 +77,8 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
      */
     private final long CHANNEL_ALIVE_INTERVAL_MS = 30000L;
 
+    private final AtomicBoolean Writable = new AtomicBoolean(true);
+
     /**
      * Number of messages buffered in memory.
      */
@@ -87,6 +87,8 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
     private final InetSocketAddress dstAddress;
 
     private final String dstHost;
+    private volatile Map<Integer, Double> serverLoad = null;
+
     protected final String dstAddressPrefixedName;
     private final Context context;
 
@@ -99,7 +101,10 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
 
     ///RDMA HOSTNAME
     private final String IBAddress;
-    private HashedWheelTimer scheduler;
+    //private HashedWheelTimer scheduler;
+
+    private final ExecutorService connectThreadPool = Executors.newCachedThreadPool();
+
     //////////////////////////////////////RDMA///////////////////////////////////
 
     Client(Map<String, Object> topoConf, String host, int port, Context context) throws Exception {
@@ -108,15 +113,140 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
         closing = false;
 
         LOG.info("creating Netty Client, connecting to {}:{}", host, port);
-        dstHost = host;
-        dstAddress = new InetSocketAddress(host, port);
+        switch (host){
+            case "node2":
+                dstHost="10.10.0.2";
+                break;
+            case "node3":
+                dstHost="10.10.0.3";
+                break;
+            case "node8":
+                dstHost="10.10.0.8";
+                break;
+            case "node17":
+                dstHost="10.10.0.17";
+                break;
+            case "node18":
+                dstHost="10.10.0.18";
+                break;
+            case "node19":
+                dstHost="10.10.0.19";
+                break;
+            case "node24":
+                dstHost="10.10.0.24";
+                break;
+            case "node25":
+                dstHost="10.10.0.25";
+                break;
+            case "node26":
+                dstHost="10.10.0.26";
+                break;
+            case "node27":
+                dstHost="10.10.0.26";
+                break;
+            case "node28":
+                dstHost="10.10.0.26";
+                break;
+            case "node30":
+                dstHost="10.10.0.26";
+                break;
+            case "node31":
+                dstHost="10.10.0.26";
+                break;
+            case "node32":
+                dstHost="10.10.0.26";
+                break;
+            case "node33":
+                dstHost="10.10.0.26";
+                break;
+            case "node34":
+                dstHost="10.10.0.26";
+                break;
+            case "node35":
+                dstHost="10.10.0.26";
+                break;
+            case "node36":
+                dstHost="10.10.0.26";
+                break;
+            case "node42":
+                dstHost="10.10.0.26";
+                break;
+            case "node43":
+                dstHost="10.10.0.26";
+                break;
+            case "node44":
+                dstHost="10.10.0.26";
+                break;
+            case "node45":
+                dstHost="10.10.0.26";
+                break;
+            case "node62":
+                dstHost="10.10.0.26";
+                break;
+            case "node63":
+                dstHost="10.10.0.26";
+                break;
+            case "node64":
+                dstHost="10.10.0.26";
+                break;
+            case "node65":
+                dstHost="10.10.0.26";
+                break;
+            case "node88":
+                dstHost="10.10.0.26";
+                break;
+            case "node89":
+                dstHost="10.10.0.26";
+                break;
+            case "node90":
+                dstHost="10.10.0.26";
+                break;
+            case "node91":
+                dstHost="10.10.0.26";
+                break;
+            case "node92":
+                dstHost="10.10.0.26";
+                break;
+            case "node93":
+                dstHost="10.10.0.26";
+                break;
+            case "node94":
+                dstHost="10.10.0.26";
+                break;
+            case "node95":
+                dstHost="10.10.0.26";
+                break;
+            case "node96":
+                dstHost="10.10.0.26";
+                break;
+            case "node97":
+                dstHost="10.10.0.26";
+                break;
+            case "node98":
+                dstHost="10.10.0.26";
+                break;
+            case "node99":
+                dstHost="10.10.0.26";
+                break;
+            case "node100":
+                dstHost="10.10.0.26";
+                break;
+
+            default:
+                dstHost="";
+                break;
+        }
+
+        port=1955;
+
+        dstAddress = new InetSocketAddress(dstHost, port);
         dstAddressPrefixedName = prefixedName(dstAddress);
 
         ///add IBAddress Configure
         BufferedReader bufferedReader=new BufferedReader(new FileReader("/whale/RDMAHostName"));
         this.IBAddress=bufferedReader.readLine();
 
-        scheduler = new HashedWheelTimer(new NettyRenameThreadFactory("client-schedule-service"));
+        //scheduler = new HashedWheelTimer(new NettyRenameThreadFactory("client-schedule-service"));
 
         int messageBatchSize = ObjectReader.getInt(topoConf.get(Config.STORM_NETTY_MESSAGE_BATCH_SIZE), 262144);
 
@@ -141,7 +271,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
 
         });
 
-        launchChannelAliveThread();
+        //launchChannelAliveThread();
         scheduleConnect(NO_DELAY_MS);
     }
 
@@ -212,7 +342,8 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
     }
 
     private void scheduleConnect(long delayMs) {
-        scheduler.newTimeout(new Connect(dstAddress), delayMs, TimeUnit.MILLISECONDS);
+        //scheduler.newTimeout(new Connect(dstAddress), delayMs, TimeUnit.MILLISECONDS);
+        connectThreadPool.submit(new Connect(dstAddress));
     }
 
     @Override
@@ -246,6 +377,8 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
         send(workerMessage);
     }
 
+    private long startTimeMills=0L;
+    private long endTimeMills=0L;
     ////////////////////////////////////优化transferAllGrouping/////////////////////////
     /**
      * Enqueue task messages to be sent to the remote destination (cf. `host` and `port`).
@@ -264,8 +397,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
             return;
         }
 
-        RdmaChannel channel = getConnectedChannel();
-        if (channel == null) {
+        if (!rdmaChannel.isConnected()) {
             /*
              * Connection is unavailable. We will drop pending messages and let at-least-once message replay kick in.
              *
@@ -280,13 +412,34 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
         synchronized (writeLock) {
             MessageBatch full = batcher.add(msgs);
             if(full != null){
-                flushMessages(channel, full);
+                flushMessages(rdmaChannel, full);
+                endTimeMills=0L;
+            }else {
+                if(System.currentTimeMillis()-endTimeMills>=1000 && endTimeMills!=0L){
+                    if(Writable.get()){
+                        // Netty's internal buffer is not full and we still have message left in the buffer.
+                        // We should write the unfilled MessageBatch immediately to reduce latency
+                        MessageBatch batch = batcher.drain();
+                        if(batch != null) {
+                            flushMessages(rdmaChannel, batch);
+                        }
+                    }
+                }
+                endTimeMills=System.currentTimeMillis();
             }
         }
+
+
     }
 
     private void flushMessages(RdmaChannel channel, MessageBatch full) {
         try {
+
+            Writable.compareAndSet(true,false);
+
+            //initSGRecv
+            rdmaChannel.initRecvs();
+
             ChannelBuffer buffer = full.buffer();
             ByteBuffer byteBuffer = buffer.toByteBuffer();
             rdmaChannel.setDataBuffer(byteBuffer);
@@ -305,8 +458,6 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
             sendBuf.clear();
 
             LOG.info("first add: " + dataMr.getAddress() + " lkey: " + dataMr.getLkey() + " length: " + dataMr.getLength());
-            LOG.info("dataBuf: " + dataBuf.asCharBuffer().toString());
-            LOG.info("byteBuffer: " + byteBuffer.asCharBuffer().toString());
 
             //post a send call, here we send a message which include the RDMA information of a data buffer
             recvBuf.clear();
@@ -324,21 +475,22 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
                 }
             }, new long[]{sendMr.getAddress()}, new int[]{sendMr.getLkey()}, new int[]{sendMr.getLength()});
 
-            LOG.info("RDMA SEND Address Success");
+            //rdmaChannel.completeSGRecv();
 
-            System.out.println("VerbsServer::stag info sent");
-
-            //initSGRecv
-            rdmaChannel.initRecvs();
+            LOG.debug("RDMA SEND Address Success");
 
             //wait for the final message from the server
-            rdmaChannel.completeSGRecv();
+            boolean m_bool = rdmaChannel.completeSGRecv();
 
-            System.out.println("VerbsServer::done");
+            LOG.debug("rdmaChannel completeSGRecv : "+m_bool);
+
+            LOG.debug("VerbsServer::done");
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        Writable.compareAndSet(false,true);
     }
 
     private boolean hasMessages(WorkerMessage workerMessage) {
@@ -358,7 +510,18 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
 
     @Override
     public Map<Integer, Load> getLoad(Collection<Integer> tasks) {
-        return null;
+        Map<Integer, Double> loadCache = serverLoad;
+        Map<Integer, Load> ret = new HashMap<Integer, Load>();
+        if (loadCache != null) {
+            double clientLoad = Math.min(pendingMessages.get(), 1024)/1024.0;
+            for (Integer task : tasks) {
+                Double found = loadCache.get(task);
+                if (found != null) {
+                    ret.put(task, new Load(true, found, clientLoad));
+                }
+            }
+        }
+        return ret;
     }
 
     @Override
@@ -451,7 +614,7 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
      * This task runs on a single thread shared among all clients, and thus
      * should not perform operations that block.
      */
-    private class Connect implements TimerTask {
+    private class Connect implements Runnable {
 
         private final InetSocketAddress address;
 
@@ -468,15 +631,22 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
             scheduleConnect(nextDelayMs);
         }
 
-
         @Override
-        public void run(Timeout timeout) throws Exception {
+        public void run() {
             if (reconnectingAllowed()) {
+                ///////////////if connected return////////////////
+                if(rdmaChannel!=null){
+                    return;
+                }
+
+                LOG.info("connect: "+address);
                 try {
                     final int connectionAttempt = connectionAttempts.getAndIncrement();
                     totalConnectionAttempts.getAndIncrement();
 
                     rdmaChannel=rdmaClient.getRdmaChannel(address, true);
+                    //initSGRecv
+                    rdmaChannel.initRecvs();
 
                     if(rdmaChannel!=null && connectionEstablished(rdmaChannel)){
                         boolean setChannel = channelRef.compareAndSet(null, rdmaChannel);
@@ -491,7 +661,11 @@ public class Client extends ConnectionWithStatus implements IStatefulObject {
                     cause.printStackTrace();
                     reschedule(cause);
                     if (rdmaChannel != null) {
-                        rdmaChannel.stop();
+                        try {
+                            rdmaChannel.stop();
+                        } catch (InterruptedException | IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             } else {

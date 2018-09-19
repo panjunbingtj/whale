@@ -1,6 +1,7 @@
 package org.apache.storm.messaging;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class WorkerMessage {
     }
 
     public WorkerMessage() {
+        _taskIds=new ArrayList<>();
     }
 
     public List<Integer> tasks() {
@@ -45,7 +47,7 @@ public class WorkerMessage {
         for(int i=0;i<size;i++){
             _taskIds.add((int) packet.getShort());
         }
-        _message = new byte[packet.limit()-2*size];
+        _message = new byte[packet.limit()-2*size-2];
         packet.get(_message);
     }
 
