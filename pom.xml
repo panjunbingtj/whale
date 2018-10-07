@@ -401,6 +401,7 @@
         <module>benchmark/NASDAQStockDealWhale</module>
         <module>benchmark/serializeBenchMark</module>
         <module>benchmark/WhaleScheduler</module>
+        <module>benchmark/commBenchmark</module>
     </modules>
 
     <dependencies>

@@ -3,6 +3,8 @@
 sar -P ALL 1 > downcpuinfo.out
 sar -P ALL 1 > upcpuinfo.out
 
+sar -P ALL 1 > cpuinfo.out
+
 #DiDi滴滴打车订单匹配Topology
 /storm/kafka_2.10-0.10.2.1/bin/kafka-topics.sh --create --zookeeper node100:2181,node101:2181,node102:2181 --replication-factor 3 --partitions 1 --topic ordersTopic_1
 cat /storm/DiDiData/orders | /storm/kafka_2.10-0.10.2.1/bin/kafka-console-producer.sh --broker-list node101:9092,node102:9092,node103:9092,node104:9092,node105:9092,node106:9092 --topic ordersTopic_1

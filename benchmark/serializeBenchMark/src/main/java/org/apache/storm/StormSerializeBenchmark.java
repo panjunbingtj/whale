@@ -25,8 +25,11 @@ public class StormSerializeBenchmark {
             tuple=new MyTuple(12,"ack_stream",new Values(NASDAQStockDeal));
 
 		KryoMyTupleSerializer kryoMyTupleSerializer=new KryoMyTupleSerializer();
+        Long statTime=System.currentTimeMillis();
         for(int i=0;i<serializeTimes*tuplesNum;i++){
             byte[] bytes = kryoMyTupleSerializer.serialize(tuple);
         }
+        Long endTime=System.currentTimeMillis();
+        System.out.println("SerializeTime: "+ (endTime-statTime));
     }
 }

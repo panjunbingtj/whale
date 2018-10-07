@@ -12,7 +12,8 @@ import java.io.*;
  * Created by 79875 on 2017/3/25.
  * 采集CPU使用率
  */
-public class CpuUsage extends ResourceUsage {
+public class
+CpuUsage extends ResourceUsage {
 
     private static Logger log = Logger.getLogger(CpuUsage.class);
     private static CpuUsage INSTANCE = new CpuUsage();
