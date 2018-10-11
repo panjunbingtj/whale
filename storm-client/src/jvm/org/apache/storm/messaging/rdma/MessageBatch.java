@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 ////////////////////////////////////优化transferAllGrouping/////////////////////////
-class MessageBatch {
+public class MessageBatch {
     private int buffer_size;
     private ArrayList<WorkerMessage> msgs;
     private int encoded_length;
@@ -80,7 +80,7 @@ class MessageBatch {
     /**
      * create a buffer containing the encoding of this batch
      */
-    ChannelBuffer buffer() throws Exception {
+    public ChannelBuffer buffer() throws Exception {
         //RDMA Whale Benchmark
 //        Integer workerNums=6;
 //        encoded_length+=2*workerNums*msgs.size();

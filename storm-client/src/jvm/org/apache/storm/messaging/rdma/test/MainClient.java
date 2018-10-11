@@ -1,6 +1,6 @@
 //package org.apache.storm.messaging.rdma.test;
 //
-//import org.apache.storm.messaging.rdma.Client;
+//import org.apache.storm.messaging.rdma.rdmawrite.Client;
 //
 //import java.util.HashMap;
 //import java.util.Map;

@@ -1,4 +1,4 @@
-package org.apache.storm.messaging.rdma;
+package org.apache.storm.messaging.rdma.rdmawrite;
 
 import com.ibm.disni.channel.*;
 import org.apache.storm.Config;
@@ -6,6 +6,8 @@ import org.apache.storm.grouping.Load;
 import org.apache.storm.messaging.ConnectionWithStatus;
 import org.apache.storm.messaging.IConnectionCallback;
 import org.apache.storm.messaging.WorkerMessage;
+import org.apache.storm.messaging.rdma.MessageBatch;
+import org.apache.storm.messaging.rdma.MessageBuffer;
 import org.apache.storm.metric.api.IStatefulObject;
 import org.apache.storm.utils.ObjectReader;
 import org.apache.storm.utils.StormBoundedExponentialBackoffRetry;

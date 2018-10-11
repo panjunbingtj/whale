@@ -1,7 +1,8 @@
-package org.apache.storm.messaging.rdma;
+package org.apache.storm.messaging.rdma.rdmawrite;
 
 import org.apache.storm.messaging.IConnection;
 import org.apache.storm.messaging.IContext;
+import org.apache.storm.messaging.rdma.Server;
 
 import java.util.HashMap;
 import java.util.Map;
