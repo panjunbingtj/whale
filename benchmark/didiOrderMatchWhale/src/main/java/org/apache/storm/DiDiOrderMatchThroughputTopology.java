@@ -19,7 +19,7 @@ import static org.apache.storm.kafka.spout.KafkaSpoutConfig.FirstPollOffsetStrat
  * Created by mastertj on 2018/3/5.
  * DiDi滴滴打车订单匹配Topology
  * storm jar didiOrderMatchWhale-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchThroughputTopology DiDiOrderMatchThroughputTopology ordersTopic 30 1 60
- * storm jar didiOrderMatchWhale-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchThroughputTopology DiDiOrderMatchThroughputTopology ordersTopic 7 1 30
+ * storm jar didiOrderMatchWhale-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchThroughputTopology DiDiOrderMatchThroughputTopology ordersTopic 7 1 30 1024
  */
 public class DiDiOrderMatchThroughputTopology {
     public static final String KAFKA_SPOTU_ID ="kafka-spout";
@@ -39,7 +39,7 @@ public class DiDiOrderMatchThroughputTopology {
         Integer numworkers=Integer.valueOf(args[2]);
         Integer spoutInstancesNum=Integer.valueOf(args[3]);
         Integer boltInstancesNum=Integer.valueOf(args[4]);
-
+        Integer batchSize = Integer.valueOf(args[5]);
         TopologyBuilder builder=new TopologyBuilder();
 
         SpoutDeclarer spoutDeclarer = builder.setSpout(KAFKA_SPOTU_ID, new DiDiOrdersSpout<>(getKafkaSpoutConfig(KAFKA_LOCAL_BROKER, topic)), spoutInstancesNum);
@@ -49,7 +49,7 @@ public class DiDiOrderMatchThroughputTopology {
         Config config=new Config();
         //config.setDebug(true);
         config.setNumAckers(0);
-
+        config.put("Config.STORM_NETTY_MESSAGE_BATCH_SIZE",batchSize);
         if(args!=null && args.length <= 0){
             Utils.sleep(50*1000);//50s
         }else {

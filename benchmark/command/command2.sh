@@ -4,7 +4,7 @@ sar -P ALL 1 > downcpuinfo.out
 sar -P ALL 1 > upcpuinfo.out
 
 #DiDi滴滴打车订单匹配Topology
-/storm/kafka_2.10-0.10.2.1/bin/kafka-topics.sh --create --zookeeper node100:2181,node101:2181,node102:2181 --replication-factor 3 --partitions 1 --topic ordersTopic_1
+/whale/kafka/kafka_2.10-0.10.2.0/bin/kafka-topics.sh --create --zookeeper node24:2181,node25:2181,node26:2181 --replication-factor 3 --partitions 1 --topic ordersTopic
 cat /whale/DiDiData/orders | /whale/kafka/kafka_2.10-0.10.2.0/bin/kafka-console-producer.sh --broker-list node24:9092,node25:9092,node26:9092,node27:9092,node28:9092,node30:9092 --topic ordersTopic
 storm jar /home/zhangfan/didiOrderMatch-2.0.0-SNAPSHOT.jar org.apache.storm.DiDiOrderMatchTopology DiDiOrderMatchTopology ordersTopic_1 3 1 6
 

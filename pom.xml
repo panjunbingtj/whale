@@ -393,7 +393,8 @@
         <module>examples/storm-rocketmq-examples</module>
         <module>examples/storm-perf</module>
 
-        <!-- benchmakr -->
+        <!-- benchmark -->
+        <module>benchmark/commBenchmark</module>
         <module>benchmark/didiDataExchange</module>
         <module>benchmark/didiOrderMatch</module>
         <module>benchmark/didiOrderMatchWhale</module>

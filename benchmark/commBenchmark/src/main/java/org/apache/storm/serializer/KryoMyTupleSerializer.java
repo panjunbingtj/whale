@@ -2,7 +2,6 @@ package org.apache.storm.serializer;
 
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.storm.model.MyTuple;
-import org.apache.storm.model.WhaleTuple;
 import org.apache.storm.serialization.KryoValuesSerializer;
 import org.apache.storm.utils.Utils;
 
@@ -26,21 +25,6 @@ public class KryoMyTupleSerializer {
 
 			_kryoOut.clear();
 			_kryoOut.writeInt(tuple.getTaskid(), true);
-			_kryoOut.writeString(tuple.getStreamId());
-			_kryo.serializeInto(tuple.getValues(), _kryoOut);
-			return _kryoOut.toBytes();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	public byte[] serializeWhaleTuple(WhaleTuple tuple) {
-		try {
-
-			_kryoOut.clear();
-			for (Integer integer : tuple.getTaskids()) {
-				_kryoOut.writeInt(integer, true);
-			}
 			_kryoOut.writeString(tuple.getStreamId());
 			_kryo.serializeInto(tuple.getValues(), _kryoOut);
 			return _kryoOut.toBytes();
